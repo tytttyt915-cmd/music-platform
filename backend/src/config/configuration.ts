@@ -1,3 +1,13 @@
+/** 按 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD 拼出连接 URL（含密码转义） */
+function buildRedisUrl(): string {
+  const host = process.env.REDIS_HOST ?? 'localhost';
+  const port = process.env.REDIS_PORT ?? '6379';
+  const password = process.env.REDIS_PASSWORD;
+  return password
+    ? `redis://:${encodeURIComponent(password)}@${host}:${port}`
+    : `redis://${host}:${port}`;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
@@ -10,7 +20,8 @@ export default () => ({
     database: process.env.DB_DATABASE ?? 'musicdb',
   },
   redis: {
-    url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+    // 显式 REDIS_URL 优先；否则按 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD 自动拼接
+    url: process.env.REDIS_URL ?? buildRedisUrl(),
   },
 
   jwt: {
