@@ -148,12 +148,14 @@ jobs:
           TMP_PROV=/tmp/profile.mobileprovision
           echo "$MOBILEPROVISION_BASE64" | base64 --decode -o "$TMP_PROV"
           [[ -s "$TMP_PROV" ]] || { echo "::error::描述文件 base64 解码后为空，检查 MOBILEPROVISION_BASE64 secret"; exit 1; }
-          security cms -D -i "$TMP_PROV" >/dev/null || { echo "::error::描述文件不是有效的 CMS/PKCS#7，检查 secret 内容"; exit 1; }
-          PROV_UUID=$(security cms -D -i "$TMP_PROV" | /usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin)
-          PROV_NAME=$(security cms -D -i "$TMP_PROV" | /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin)
-          APP_ID=$(security cms -D -i "$TMP_PROV" | /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" /dev/stdin)
+          # PlistBuddy 不能读管道，必须先落地成文件再解析
+          TMP_PLIST=/tmp/profile.plist
+          security cms -D -i "$TMP_PROV" -o "$TMP_PLIST" || { echo "::error::描述文件不是有效的 CMS/PKCS#7，检查 secret 内容"; exit 1; }
+          PROV_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$TMP_PLIST")
+          PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$TMP_PLIST")
+          APP_ID=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$TMP_PLIST")
           cp "$TMP_PROV" "$DEST/$PROV_UUID.mobileprovision"
-          rm -f "$TMP_PROV"
+          rm -f "$TMP_PROV" "$TMP_PLIST"
           echo "PROVISION_NAME=$PROV_NAME" >> "$GITHUB_ENV"
           echo "Provision: $PROV_NAME ($PROV_UUID), App ID: $APP_ID"
           # ★ 校验 bundle id 与描述文件一致性
