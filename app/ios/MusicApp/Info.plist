@@ -26,9 +26,9 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
+	  <!-- 后端暂无 HTTPS 证书，Ad Hoc 内测包放行 HTTP 明文；上架 App Store 前必须切 HTTPS 并改回 -->
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
