@@ -480,7 +480,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.musicapp;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tamarind5153.aries1536;
 				CODE_SIGN_ENTITLEMENTS = MusicApp/MusicApp.entitlements;
 				PRODUCT_NAME = MusicApp;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -507,7 +507,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.musicapp;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tamarind5153.aries1536;
 				CODE_SIGN_ENTITLEMENTS = MusicApp/MusicApp.entitlements;
 				PRODUCT_NAME = MusicApp;
 				SWIFT_VERSION = 5.0;

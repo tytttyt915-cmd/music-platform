@@ -82,10 +82,11 @@ jobs:
       # ---------- 4. Bundle ID 前置校验（占位符直接失败，不浪费 20 分钟构建） ----------
       - name: Verify bundle identifier is not placeholder
         run: |
-          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${{ env.IOS_DIR }}/MusicApp/Info.plist")
+          # Info.plist 里是 $(PRODUCT_BUNDLE_IDENTIFIER) 变量，真值从 pbxproj 取
+          BUNDLE_ID=$(grep -m1 'PRODUCT_BUNDLE_IDENTIFIER' "${{ env.IOS_DIR }}/MusicApp.xcodeproj/project.pbxproj" | sed -E 's/.*=[[:space:]]*([^;]+);/\1/' | xargs)
           echo "BUNDLE_ID=$BUNDLE_ID" >> "$GITHUB_ENV"
           if [[ "$BUNDLE_ID" == "com.example.musicapp" ]]; then
-            echo "::error::Info.plist 仍是占位 bundle id，请先改为与描述文件一致的真实 App ID"
+            echo "::error::仍是占位 bundle id，请先改为与描述文件一致的真实 App ID"
             exit 1
           fi
           echo "Bundle ID: $BUNDLE_ID"
