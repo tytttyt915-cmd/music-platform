@@ -150,7 +150,7 @@ export default function AuthScreen({visible, onClose, onSuccess}: Props) {
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
           <Text style={styles.headerTitle}>登录 / 注册</Text>
-          <View style={styles.closeBtn} />
+          <Text style={styles.versionText}>v1.0.2</Text>
         </View>
 
         {/* 微信登录 */}
@@ -249,6 +249,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  versionText: {
+    color: '#666',
+    fontSize: 11,
+    position: 'absolute',
+    right: 16,
   },
   wechatBtn: {
     backgroundColor: '#07c160',

@@ -69,7 +69,12 @@ export class ApiError extends Error {
 }
 
 function networkErrorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  if (e instanceof Error) {
+    // React Native iOS 底层是 NSError，message 里通常带 code（如 -1009 断网、-1022 ATS 拦截）
+    // 把 name 也带上，方便区分 TypeError(网络)/其他异常
+    return `${e.name}: ${e.message}`;
+  }
+  return String(e);
 }
 
 // ---------------- 本地登录态 ----------------
