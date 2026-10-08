@@ -1,13 +1,21 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OSS from '@alicloud/oss';
 import COS from 'cos-nodejs-sdk-v5';
 
-export type StorageProvider = 'oss' | 'cos';
+export type StorageProvider = 'oss' | 'cos' | 'none';
 
 /**
  * 对象存储预签名服务。
- * 按 STORAGE_PROVIDER 选择 oss / cos，缺配置时启动即抛错说明原因。
+ * 按 STORAGE_PROVIDER 选择 oss / cos / none。
+ * none = 未配置对象存储：后端可正常启动（登录/搜索/歌单可用），
+ * 仅 /music/track/:id/stream 返回 503 提示补配存储。
+ * oss / cos 缺配置时启动即抛错说明原因。
  */
 @Injectable()
 export class StorageService implements OnModuleInit {
@@ -19,9 +27,9 @@ export class StorageService implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) {
     const provider = this.config.get<string>('storage.provider', 'oss');
-    if (provider !== 'oss' && provider !== 'cos') {
+    if (provider !== 'oss' && provider !== 'cos' && provider !== 'none') {
       throw new Error(
-        `STORAGE_PROVIDER 非法: "${provider}"，仅支持 oss | cos`,
+        `STORAGE_PROVIDER 非法: "${provider}"，仅支持 oss | cos | none`,
       );
     }
     this.provider = provider;
@@ -32,6 +40,12 @@ export class StorageService implements OnModuleInit {
   }
 
   onModuleInit() {
+    if (this.provider === 'none') {
+      this.logger.warn(
+        'STORAGE_PROVIDER=none：对象存储未配置，音频流接口将返回 503，补配 COS/OSS 后重启生效',
+      );
+      return;
+    }
     if (this.provider === 'oss') {
       const { region, bucket, accessKeyId, accessKeySecret, endpoint } =
         this.config.get('storage.oss');
@@ -75,6 +89,11 @@ export class StorageService implements OnModuleInit {
   async signGetUrl(storageKey: string): Promise<string> {
     if (!storageKey) {
       throw new Error('storageKey 不能为空');
+    }
+    if (this.provider === 'none') {
+      throw new ServiceUnavailableException(
+        '对象存储未配置（STORAGE_PROVIDER=none），请补配 COS/OSS 后重启后端',
+      );
     }
     if (this.provider === 'oss') {
       // @alicloud/oss: signatureUrl 同步返回签名 URL
