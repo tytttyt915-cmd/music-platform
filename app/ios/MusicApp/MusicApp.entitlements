@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+App 权限声明文件。
+把 applinks:music.example.com 替换为你的真实关联域名，
+并在该域名下部署 apple-app-site-association 文件后，Universal Links 方可生效。
+微信 Universal Links 需另行追加 applinks 条目（接入微信 SDK 时配置）。
+-->
+<plist version="1.0">
+<dict>
+<key>com.apple.developer.associated-domains</key>
+<array>
+<string>applinks:music.example.com</string>
+</array>
+</dict>
+</plist>
