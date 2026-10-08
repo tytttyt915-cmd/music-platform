@@ -1,10 +1,10 @@
 /**
 * 网关地址与本地存储键配置。
 *
-* 把 API_URL 替换为你自己的后端网关公网地址
-*（Phase 1 部署的 NestJS 服务，建议经 Nginx 反向代理后的 HTTPS 地址）。
+* 后端网关公网地址（docker-compose 的 Nginx 入口，默认 80 端口）。
+* 各接口路径（/auth/*、/music/*）由 client.ts 自行拼接，不要带多余后缀。
 */
-export const API_URL = 'http://YOUR_SERVER_IP/audio';
+export const API_URL = 'http://111.230.155.174';
 
 /** AsyncStorage 存储键 */
 export const TOKEN_STORAGE_KEY = '@musicapp/access_token';
