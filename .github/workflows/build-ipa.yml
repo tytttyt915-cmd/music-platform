@@ -79,6 +79,17 @@ jobs:
           node --version
           xcodebuild -version
 
+      # ---------- 3.5 选择 Xcode 16 工具链 ----------
+      # 部分 Pod 预编译模块（如 async-storage 的 SharedAsyncStorage）用 Swift 6 构建，
+      # runner 默认的 Xcode 15（Swift 5.10）编译器不认，必须切到 Xcode 16+
+      - name: Select Xcode 16 toolchain
+        run: |
+          XCODE_APP=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          [[ -n "$XCODE_APP" ]] || { echo "::error::未找到 Xcode 16，现有版本:"; ls -d /Applications/Xcode*.app 2>/dev/null; exit 1; }
+          echo "使用 $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          xcodebuild -version
+
       # ---------- 4. Bundle ID 前置校验（占位符直接失败，不浪费 20 分钟构建） ----------
       - name: Verify bundle identifier is not placeholder
         run: |
