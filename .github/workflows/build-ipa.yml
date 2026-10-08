@@ -193,6 +193,7 @@ jobs:
             -workspace "${{ env.WORKSPACE }}" \
             -scheme "${{ env.SCHEME }}" \
             -configuration "${{ env.CONFIGURATION }}" \
+            -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/MusicApp.xcarchive" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY }}" \
