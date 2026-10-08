@@ -209,6 +209,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY }}" \
             PROVISIONING_PROFILE_SPECIFIER="${{ env.PROVISION_NAME }}" \
+            RCT_NEW_ARCH_ENABLED=0 \
             archive
 
       # ---------- 10. Export IPA ----------
