@@ -11,6 +11,7 @@
  * - POST /music/track/:id/play（播放统计，防刷）
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NativeModules} from 'react-native';
 import {
   API_URL,
   GUEST_FLAG_STORAGE_KEY,
@@ -18,6 +19,50 @@ import {
   REFRESH_TOKEN_STORAGE_KEY,
   TOKEN_STORAGE_KEY,
 } from './config';
+
+/**
+ * 原生直连网络模块（iOS DirectNetworkModule）。
+ * 绕过 RCTNetworking，直接用 NSURLSession 发请求。
+ * 如果原生模块不可用（比如 Android），回退到 fetch。
+ */
+const DirectNetwork = (NativeModules as any).DirectNetworkModule;
+
+interface DirectResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+}
+
+async function directFetch(url: string, init: RequestInit): Promise<Response> {
+  if (!DirectNetwork) {
+    // 非 iOS 或模块未注册，走标准 fetch
+    return fetch(url, init);
+  }
+  const headers: Record<string, string> = {};
+  const h = init.headers as Record<string, string> | undefined;
+  if (h) {
+    for (const k of Object.keys(h)) headers[k] = h[k];
+  }
+  const bodyStr =
+    typeof init.body === 'string' ? init.body : init.body ? JSON.stringify(init.body) : '';
+  const res: DirectResponse = await DirectNetwork.sendRequest(
+    url,
+    init.method || 'GET',
+    headers,
+    bodyStr,
+  );
+  // 包装成 Response 兼容形状，供上层 res.status / res.json() / res.text() 使用
+  const responseHeaders = new Headers();
+  for (const k of Object.keys(res.headers || {})) {
+    try {
+      responseHeaders.append(k, String((res.headers as any)[k]));
+    } catch {}
+  }
+  return new Response(res.body, {
+    status: res.status,
+    headers: responseHeaders,
+  });
+}
 
 /** 音频码率（与后端 StreamQueryDto 的 TRACK_QUALITIES 对齐） */
 export type AudioQuality = 'standard' | 'high' | 'lossless' | 'hires';
@@ -128,7 +173,7 @@ async function tryRefreshToken(): Promise<boolean> {
     if (!refreshToken) {
       return false;
     }
-    const res = await fetch(`${API_URL}/auth/refresh`, {
+    const res = await directFetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({refreshToken}),
@@ -173,7 +218,7 @@ export async function apiFetch<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {...init, headers});
+    res = await directFetch(`${API_URL}${path}`, {...init, headers});
   } catch (e) {
     throw new ApiError(0, `网络请求失败：${networkErrorMessage(e)}`);
   }
@@ -318,7 +363,7 @@ export async function getStreamUrl(
   const reqUrl = `${API_URL}/music/track/${id}/stream?quality=${quality}`;
   let res: Response;
   try {
-    res = await fetch(reqUrl, {
+    res = await directFetch(reqUrl, {
       headers: token ? {Authorization: `Bearer ${token}`} : {},
       // manual：不自动跟随 302，让我们拿到签名直链后自己交给播放器
       redirect: 'manual',
