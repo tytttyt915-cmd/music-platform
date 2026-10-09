@@ -59,9 +59,11 @@ struct AudioReactiveBackground: View {
     @available(iOS 17, *)
     private var shaderBackground: some View {
         // 播放时全帧率，暂停时 15fps 呼吸
-        TimelineView(AnimationTimelineSchedule.animation(minimumInterval: player.isPlaying ? nil : 1.0 / 15.0)) { context in
+        let interval: Double? = player.isPlaying ? nil : 1.0 / 15.0
+        let schedule = AnimationTimelineSchedule.animation(minimumInterval: interval)
+        return TimelineView(schedule) { context in
             let now = context.date.timeIntervalSinceReferenceDate
-            Rectangle()
+            return Rectangle()
                 .colorEffect(
                     ShaderLibrary.waveBackground(
                         .float(Float(now)),
