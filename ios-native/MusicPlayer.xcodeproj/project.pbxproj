@@ -41,6 +41,8 @@
 		EAF1A58B477D8B01387DC644 /* EqualizerBars.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83618B49B18562E7108BCF7 /* EqualizerBars.swift */; };
 		7E8730DE78C98BE44AAF4088 /* BlurText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */; };
 		16BCF2C5DD92EB719D732C02 /* ShinyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */; };
+		361451531ECB194F9DE4099F /* SpotlightCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8CE819BA81246C80EA5808 /* SpotlightCard.swift */; };
+		82EC5FACF1F5FA213FC33994 /* CountUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC981940488EBBCDF072A131 /* CountUp.swift */; };
 		B4620A5EA04084E064847C5F /* WaveBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = 0334C937FA3A5AA0B8E5FE67 /* WaveBackground.metal */; };
 		FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */; };
 /* End PBXBuildFile section */
@@ -89,6 +91,8 @@
 		F83618B49B18562E7108BCF7 /* EqualizerBars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/EqualizerBars.swift; sourceTree = "<group>"; };
 		DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/BlurText.swift; sourceTree = "<group>"; };
 		5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ShinyText.swift; sourceTree = "<group>"; };
+		5E8CE819BA81246C80EA5808 /* SpotlightCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SpotlightCard.swift; sourceTree = "<group>"; };
+		AC981940488EBBCDF072A131 /* CountUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/CountUp.swift; sourceTree = "<group>"; };
 		0334C937FA3A5AA0B8E5FE67 /* WaveBackground.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = WaveBackground.metal; sourceTree = "<group>"; };
 		8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/AudioReactiveBackground.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -185,6 +189,8 @@
 				F83618B49B18562E7108BCF7 /* EqualizerBars.swift */,
 				DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */,
 				5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */,
+				5E8CE819BA81246C80EA5808 /* SpotlightCard.swift */,
+				AC981940488EBBCDF072A131 /* CountUp.swift */,
 				8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */,
 			);
 			path = Views;
@@ -313,6 +319,8 @@
 				EAF1A58B477D8B01387DC644 /* EqualizerBars.swift in Sources */,
 				7E8730DE78C98BE44AAF4088 /* BlurText.swift in Sources */,
 				16BCF2C5DD92EB719D732C02 /* ShinyText.swift in Sources */,
+				361451531ECB194F9DE4099F /* SpotlightCard.swift in Sources */,
+				82EC5FACF1F5FA213FC33994 /* CountUp.swift in Sources */,
 				B4620A5EA04084E064847C5F /* WaveBackground.metal in Sources */,
 				FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */
 			);
