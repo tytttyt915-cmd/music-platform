@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS tracks (
     play_count   BIGINT NOT NULL DEFAULT 0,    -- 防刷后的有效播放数
     status       VARCHAR(16) NOT NULL DEFAULT 'online'
                  CHECK (status IN ('online', 'offline')),
+    preferred_source VARCHAR(16) NOT NULL DEFAULT 'auto'
+                 CHECK (preferred_source IN ('auto', 'local', 'netease', 'qq', 'kugou')),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );

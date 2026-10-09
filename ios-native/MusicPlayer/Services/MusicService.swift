@@ -98,6 +98,25 @@ final class MusicService: ObservableObject {
         )
     }
 
+    // MARK: - 手动换源
+
+    /// 可用源列表（本地码率 + 各平台最佳匹配）
+    func availableSources(id: String) async throws -> TrackSources {
+        try validateUUID(id)
+        let dto: TrackSourcesDTO = try await api.get("/music/track/\(id)/sources")
+        return dto.toModel()
+    }
+
+    /// 锁定首选源：auto | local | netease | qq | kugou
+    func setPreferredSource(id: String, source: String) async throws {
+        try validateUUID(id)
+        struct Body: Encodable { let source: String }
+        let _: EmptyPayload = try await api.put(
+            "/music/track/\(id)/preferred-source",
+            body: Body(source: source)
+        )
+    }
+
     // MARK: - 歌单
 
     /// 创建歌单
@@ -274,6 +293,43 @@ private struct PlaylistDetailDTO: Decodable {
                 id: id, title: title, coverUrl: coverUrl, isPublic: isPublic
             ).toModel(trackCount: songs.count),
             songs: songs
+        )
+    }
+}
+
+private struct TrackSourcesDTO: Decodable {
+    let preferredSource: String?
+    let local: [LocalSourceDTO]?
+    let platforms: [PlatformSourceDTO]?
+
+    func toModel() -> TrackSources {
+        TrackSources(
+            preferredSource: preferredSource ?? "auto",
+            local: (local ?? []).map { LocalSourceQuality(quality: $0.quality, bitrateKbps: $0.bitrateKbps) },
+            platforms: (platforms ?? []).map { $0.toModel() }
+        )
+    }
+}
+
+private struct LocalSourceDTO: Decodable {
+    let quality: String
+    let bitrateKbps: Int
+}
+
+private struct PlatformSourceDTO: Decodable {
+    let platform: String
+    let platformId: String
+    let title: String
+    let artist: String
+    let durationMs: Int?
+
+    func toModel() -> PlatformSource {
+        PlatformSource(
+            platform: platform,
+            platformId: platformId,
+            title: title,
+            artist: artist,
+            durationMs: durationMs
         )
     }
 }

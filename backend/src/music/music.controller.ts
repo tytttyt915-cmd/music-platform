@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -53,6 +54,30 @@ export class MusicController {
   @Get('track/:id/predict')
   predict(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.musicService.predictTrack(id);
+  }
+
+  /**
+   * 手动换源：可用源列表（本地码率 + 各平台最佳匹配）。
+   * lx-music 手动换源的服务端版。
+   */
+  @Public()
+  @Get('track/:id/sources')
+  sources(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.musicService.getAvailableSources(id);
+  }
+
+  /**
+   * 手动换源：锁定首选源。source: auto | local | netease | qq | kugou。
+   * 锁定后播放走该源，失效自动降级本地（不断播）。
+   */
+  @Public()
+  @Put('track/:id/preferred-source')
+  @HttpCode(200)
+  setPreferredSource(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() body: { source?: string },
+  ) {
+    return this.musicService.setPreferredSource(id, body?.source ?? 'auto');
   }
 
   /**

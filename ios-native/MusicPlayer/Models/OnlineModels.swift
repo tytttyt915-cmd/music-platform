@@ -93,3 +93,35 @@ enum StreamQuality: String, CaseIterable, Identifiable {
         }
     }
 }
+
+/// 手动换源：可用源
+struct TrackSources: Equatable {
+    var preferredSource: String
+    var local: [LocalSourceQuality]
+    var platforms: [PlatformSource]
+}
+
+struct LocalSourceQuality: Equatable, Hashable {
+    let quality: String
+    let bitrateKbps: Int
+}
+
+struct PlatformSource: Equatable, Identifiable, Hashable {
+    /// netease | qq | kugou
+    let platform: String
+    let platformId: String
+    let title: String
+    let artist: String
+    let durationMs: Int?
+
+    var id: String { platform }
+
+    var displayName: String {
+        switch platform {
+        case "netease": return "网易云"
+        case "qq": return "QQ 音乐"
+        case "kugou": return "酷狗"
+        default: return platform
+        }
+    }
+}

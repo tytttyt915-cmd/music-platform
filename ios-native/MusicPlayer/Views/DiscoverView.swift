@@ -18,6 +18,7 @@ struct DiscoverView: View {
     @State private var hasMore = true
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var sourceSwitchSong: OnlineSong?
 
     private var isSearchMode: Bool { !keyword.trimmingCharacters(in: .whitespaces).isEmpty }
 
@@ -46,6 +47,13 @@ struct DiscoverView: View {
                                 )
                             }
                             .pressable()
+                            .contextMenu {
+                                Button {
+                                    sourceSwitchSong = song
+                                } label: {
+                                    Label("换源", systemImage: "arrow.triangle.2.circlepath")
+                                }
+                            }
                             .padding(.horizontal, 12)
                             .onAppear {
                                 if idx == songs.count - 1 { loadMore() }
@@ -72,6 +80,9 @@ struct DiscoverView: View {
         .navigationTitle(isSearchMode ? "搜索" : "发现")
         .searchable(text: $keyword, prompt: "搜索歌曲、歌手、专辑")
         .onSubmit(of: .search) { reload() }
+        .sheet(item: $sourceSwitchSong) { song in
+            SourceSwitchView(song: song)
+        }
         .onChange(of: keyword) { newValue in
             if newValue.isEmpty { reload() }
         }

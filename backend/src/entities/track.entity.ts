@@ -11,6 +11,12 @@ import { TrackSource } from './track-source.entity';
 export const TRACK_STATUS_ONLINE = 'online';
 export const TRACK_STATUS_OFFLINE = 'offline';
 
+/** 手动换源：用户锁定的播放源（lx-music 手动换源的服务端版） */
+export const SOURCE_AUTO = 'auto';
+export const SOURCE_LOCAL = 'local';
+export const VALID_SOURCES = ['auto', 'local', 'netease', 'qq', 'kugou'] as const;
+export type PreferredSource = (typeof VALID_SOURCES)[number];
+
 @Entity('tracks')
 export class Track {
   @PrimaryGeneratedColumn('uuid')
@@ -42,6 +48,9 @@ export class Track {
 
   @Column({ type: 'varchar', length: 16, default: TRACK_STATUS_ONLINE })
   status: string;
+
+  @Column({ name: 'preferred_source', type: 'varchar', length: 16, default: SOURCE_AUTO })
+  preferredSource: string;
 
   @OneToMany(() => TrackSource, (source) => source.track)
   sources: TrackSource[];

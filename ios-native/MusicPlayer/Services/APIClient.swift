@@ -74,6 +74,7 @@ struct EmptyPayload: Decodable {}
 enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
+    case put = "PUT"
     case delete = "DELETE"
 }
 
@@ -142,6 +143,15 @@ final class APIClient {
             .delete, path,
             body: Optional<EmptyBody>.none, requiresAuth: requiresAuth
         )
+    }
+
+    /// 带 JSON Body 的 PUT
+    func put<Payload: Decodable, Body: Encodable>(
+        _ path: String,
+        body: Body,
+        requiresAuth: Bool = false
+    ) async throws -> Payload {
+        try await request(.put, path, body: body, requiresAuth: requiresAuth)
     }
 
     // MARK: - 核心请求

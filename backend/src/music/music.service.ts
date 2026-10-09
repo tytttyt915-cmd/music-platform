@@ -11,7 +11,7 @@ import { Repository } from 'typeorm';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { StorageService } from '../storage/storage.service';
 import { PlayEvent } from '../entities/play-event.entity';
-import { Track, TRACK_STATUS_ONLINE } from '../entities/track.entity';
+import { Track, TRACK_STATUS_ONLINE, VALID_SOURCES } from '../entities/track.entity';
 import { TrackSource } from '../entities/track-source.entity';
 import {
   PredictionService,
@@ -328,10 +328,29 @@ export class MusicService {
   async getStreamRedirect(id: string, quality: string) {
     const track = await this.tracksRepo.findOne({
       where: { id, status: TRACK_STATUS_ONLINE },
-      select: ['id'],
+      select: ['id', 'preferredSource', 'title', 'artist', 'durationMs'],
     });
     if (!track) {
       throw new NotFoundException('歌曲不存在或已下线');
+    }
+    // 手动换源：用户锁定了平台源 → 优先走平台直链（lx-music 手动换源的服务端版）
+    if (
+      track.preferredSource &&
+      track.preferredSource !== 'auto' &&
+      track.preferredSource !== 'local'
+    ) {
+      const platformUrl = await this.resolvePreferredPlatformUrl(track, quality);
+      if (platformUrl) {
+        return {
+          url: platformUrl,
+          quality,
+          bitrateKbps: null,
+          fileSizeBytes: null,
+          source: track.preferredSource,
+        };
+      }
+      // 平台源失效 → 自动降级回本地（超越 lx-music：不断播）
+      this.logger.warn(`曲目 ${id} 的首选源 ${track.preferredSource} 失效，降级本地`);
     }
     const source = await this.sourcesRepo.findOne({
       where: { trackId: id, quality },
@@ -345,7 +364,202 @@ export class MusicService {
       quality: source.quality,
       bitrateKbps: source.bitrateKbps,
       fileSizeBytes: source.fileSizeBytes ? Number(source.fileSizeBytes) : null,
+      source: 'local' as const,
     };
+  }
+
+  /**
+   * 解析用户锁定的平台源直链。
+   * 用缓存的 platformId（换源时写入），无缓存则实时搜索匹配。
+   */
+  private async resolvePreferredPlatformUrl(
+    track: { id: string; title: string; artist: string; durationMs: number; preferredSource: string },
+    quality: string,
+  ): Promise<string | null> {
+    const platform = track.preferredSource as 'netease' | 'qq' | 'kugou';
+    // 1. 读换源时缓存的 platformId
+    const cacheKey = `track:platform-match:${track.id}:${platform}`;
+    let platformId: string | null = null;
+    try {
+      platformId = await this.redis.get(cacheKey);
+    } catch {
+      platformId = null;
+    }
+    // 2. 无缓存 → 实时搜索最佳匹配
+    if (!platformId) {
+      const match = await this.findBestPlatformMatch(
+        track.title,
+        track.artist,
+        track.durationMs,
+        platform,
+      );
+      if (!match) return null;
+      platformId = match.platformId;
+      try {
+        await this.redis.set(cacheKey, platformId, 'EX', 7 * 86400);
+      } catch {
+        /* 缓存失败不阻塞 */
+      }
+    }
+    const q = quality === 'lossless' || quality === 'standard' ? quality : 'high';
+    return this.platforms.getPlayUrl(platform, platformId, q as 'standard' | 'high' | 'lossless');
+  }
+
+  // ---------------- 手动换源 ----------------
+
+  /**
+   * 可用源列表：本地码率 + 各平台最佳匹配。
+   * lx-music 匹配思想：标题归一化 + 时长差，用于挑平台侧同一首歌。
+   */
+  async getAvailableSources(trackId: string) {
+    const track = await this.tracksRepo.findOne({
+      where: { id: trackId, status: TRACK_STATUS_ONLINE },
+      select: ['id', 'title', 'artist', 'durationMs', 'preferredSource'],
+    });
+    if (!track) {
+      throw new NotFoundException('歌曲不存在或已下线');
+    }
+    const localSources = await this.sourcesRepo.find({
+      where: { trackId },
+      select: ['quality', 'bitrateKbps'],
+    });
+    const result: {
+      preferredSource: string;
+      local: { quality: string; bitrateKbps: number }[];
+      platforms: {
+        platform: string;
+        platformId: string;
+        title: string;
+        artist: string;
+        durationMs: number | null;
+      }[];
+    } = {
+      preferredSource: track.preferredSource || 'auto',
+      local: localSources.map((s) => ({
+        quality: s.quality,
+        bitrateKbps: s.bitrateKbps,
+      })),
+      platforms: [],
+    };
+    // 并行查各平台最佳匹配（失败的平台直接跳过）
+    const matches = await Promise.all(
+      this.platforms.enabledPlatforms.map(async (platform) => {
+        try {
+          const match = await this.findBestPlatformMatch(
+            track.title,
+            track.artist,
+            track.durationMs,
+            platform,
+          );
+          return match
+            ? {
+                platform,
+                platformId: match.platformId,
+                title: match.title,
+                artist: match.artist,
+                durationMs: match.durationMs,
+              }
+            : null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    result.platforms = matches.filter(
+      (m): m is NonNullable<typeof m> => m !== null,
+    );
+    return result;
+  }
+
+  /**
+   * 设置首选源。'auto' = 自动（本地优先，失败自动降级平台）。
+   * 锁定平台源时预缓存 platformId，加速播放。
+   */
+  async setPreferredSource(trackId: string, source: string) {
+    if (!(VALID_SOURCES as readonly string[]).includes(source)) {
+      throw new NotFoundException(`不支持的源: ${source}`);
+    }
+    const track = await this.tracksRepo.findOne({
+      where: { id: trackId, status: TRACK_STATUS_ONLINE },
+      select: ['id', 'title', 'artist', 'durationMs'],
+    });
+    if (!track) {
+      throw new NotFoundException('歌曲不存在或已下线');
+    }
+    // 锁定平台源时预查匹配并缓存
+    if (source !== 'auto' && source !== 'local') {
+      const match = await this.findBestPlatformMatch(
+        track.title,
+        track.artist,
+        track.durationMs,
+        source as 'netease' | 'qq' | 'kugou',
+      );
+      if (!match) {
+        throw new NotFoundException(`平台 ${source} 无可用匹配`);
+      }
+      try {
+        await this.redis.set(
+          `track:platform-match:${trackId}:${source}`,
+          match.platformId,
+          'EX',
+          7 * 86400,
+        );
+      } catch {
+        /* 缓存失败不阻塞 */
+      }
+    }
+    await this.tracksRepo.update(trackId, { preferredSource: source });
+    return { trackId, preferredSource: source };
+  }
+
+  /**
+   * 平台最佳匹配（lx-music findMusic 简化版）：
+   * 标题归一化（去标点/空格/大小写）+ 歌手包含 + 时长差 ≤ 10 秒。
+   */
+  private async findBestPlatformMatch(
+    title: string,
+    artist: string,
+    durationMs: number,
+    platform: 'netease' | 'qq' | 'kugou',
+  ): Promise<PlatformTrack | null> {
+    const keyword = `${title} ${artist}`.trim();
+    let candidates: PlatformTrack[] | null = null;
+    try {
+      const all = await this.platforms.searchAll(keyword, 10);
+      candidates = all.filter((t) => t.platform === platform);
+    } catch {
+      return null;
+    }
+    if (!candidates || candidates.length === 0) return null;
+    const norm = (s: string) =>
+      s.toLowerCase().replace(/[\s\p{P}]/gu, '');
+    const normTitle = norm(title);
+    const normArtist = norm(artist);
+    let best: PlatformTrack | null = null;
+    let bestScore = -1;
+    for (const c of candidates) {
+      let score = 0;
+      // 标题完全一致 +3，前缀一致 +1
+      const ct = norm(c.title);
+      if (ct === normTitle) score += 3;
+      else if (ct.startsWith(normTitle) || normTitle.startsWith(ct)) score += 1;
+      // 歌手包含 +2
+      if (norm(c.artist).includes(normArtist) || normArtist.includes(norm(c.artist))) {
+        score += 2;
+      }
+      // 时长差 ≤ 10 秒 +2，≤ 30 秒 +1
+      if (c.durationMs && durationMs > 0) {
+        const diff = Math.abs(c.durationMs - durationMs) / 1000;
+        if (diff <= 10) score += 2;
+        else if (diff <= 30) score += 1;
+        else score -= 2;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    return bestScore > 0 ? best : null;
   }
 
   // ---------------- 播放统计（防刷） ----------------
