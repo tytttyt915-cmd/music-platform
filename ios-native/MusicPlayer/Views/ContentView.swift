@@ -49,7 +49,7 @@ struct ContentView: View {
             .padding(.bottom, 8)
         }
         .background(AppleTheme.background.ignoresSafeArea())
-        .animation(.appleDefault, value: player.currentTrack?.id)
+        .animation(.gsapBackOut, value: player.currentTrack?.id)
         .fullScreenCover(isPresented: $showFullPlayer) {
             FullPlayerView()
         }

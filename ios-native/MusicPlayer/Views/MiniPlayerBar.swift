@@ -86,6 +86,6 @@ struct MiniPlayerBar: View {
                     }
                 }
         )
-        .animation(.appleSnappy, value: dragOffset == 0)
+        .animation(.gsapPower2Out, value: dragOffset == 0)
     }
 }

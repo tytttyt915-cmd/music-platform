@@ -51,6 +51,37 @@ extension Animation {
     static var appleSnappy: Animation {
         .spring(response: 0.25, dampingFraction: 1.0, blendDuration: 0)
     }
+
+    // MARK: - GSAP easing 映射（2026-10-09）
+    //
+    // 把 GSAP 的经典缓动曲线映射到 SwiftUI，供全 App 统一使用。
+    // 换算依据：~/workspace/trending/四工具适配.md（GSAP 章节）。
+
+    /// GSAP "power2.out" ≈ easeOutQuad。
+    /// 曲线：cubic-bezier(0.25, 0.46, 0.45, 0.94)。起步快、收尾缓。
+    /// 场景：列表行出现/高亮切换、错误条消失、MiniPlayer 拖拽回位、歌词自动滚动。
+    static var gsapPower2Out: Animation {
+        .timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.35)
+    }
+
+    /// GSAP "power3.out" ≈ easeOutCubic。
+    /// 曲线：cubic-bezier(0.215, 0.61, 0.355, 1)。比 power2.out 更陡的减速，干脆利落。
+    /// 场景：播放页展开/收起、歌词面板切换、拖拽松手回位。
+    static var gsapPower3Out: Animation {
+        .timingCurve(0.215, 0.61, 0.355, 1.0, duration: 0.4)
+    }
+
+    /// GSAP "back.out(1.7)"：先过冲再回位，带一点弹性俏皮。
+    /// 场景：弹窗/浮层出现（MiniPlayer 弹出、新建歌单 sheet 内容）。
+    static var gsapBackOut: Animation {
+        .spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0)
+    }
+
+    /// GSAP "elastic.out"：强回弹，果冻感。
+    /// 场景：庆祝/强调时刻（如收藏成功的心跳），慎用——与 Apple 克制风格冲突。
+    static var gsapElasticOut: Animation {
+        .spring(response: 0.6, dampingFraction: 0.4, blendDuration: 0)
+    }
 }
 
 // MARK: - 按压即时反馈（0.97 缩放）

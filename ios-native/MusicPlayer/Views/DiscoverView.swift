@@ -130,7 +130,7 @@ struct DiscoverView: View {
         Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             await MainActor.run {
-                withAnimation(.appleDefault) { errorMessage = nil }
+                withAnimation(.gsapPower2Out) { errorMessage = nil }
             }
         }
     }

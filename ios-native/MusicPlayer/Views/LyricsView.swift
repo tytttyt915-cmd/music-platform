@@ -36,7 +36,7 @@ struct LyricsView: View {
                                     .multilineTextAlignment(.center)
                                     .frame(maxWidth: .infinity)
                                     .id(line.id)
-                                    .animation(.appleDefault, value: current)
+                                    .animation(.gsapPower2Out, value: current)
                             }
                         }
                         .padding(.vertical, 20)
@@ -44,7 +44,7 @@ struct LyricsView: View {
                     }
                     .onChange(of: currentIndex) { idx in
                         guard idx >= 0, idx < lines.count else { return }
-                        withAnimation(.appleDefault) {
+                        withAnimation(.gsapPower2Out) {
                             proxy.scrollTo(lines[idx].id, anchor: .center)
                         }
                     }
