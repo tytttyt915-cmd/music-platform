@@ -62,7 +62,7 @@ export default () => ({
     timesfmUrl: process.env.TIMESFM_URL ?? 'http://127.0.0.1:8100',
     cacheTtlSec: process.env.PREDICTION_CACHE_TTL ?? '3600',
     candidateLimit: process.env.PREDICTION_CANDIDATES ?? '300',
-    requestTimeoutMs: process.env.PREDICTION_TIMEOUT_MS ?? '15000',
+    requestTimeoutMs: process.env.PREDICTION_TIMEOUT_MS ?? '3000',
   },
 
   // 第三方免费音乐 API（全都不用 key），单个服务挂了只降级不影响主流程

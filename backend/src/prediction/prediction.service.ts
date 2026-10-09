@@ -62,7 +62,7 @@ export class PredictionService {
       10,
     );
     this.requestTimeoutMs = parseInt(
-      this.config.get<string>('prediction.requestTimeoutMs') ?? '15000',
+      this.config.get<string>('prediction.requestTimeoutMs') ?? '3000',
       10,
     );
   }
