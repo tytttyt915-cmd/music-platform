@@ -70,19 +70,18 @@ struct MiniPlayerBar: View {
         }
         .liquidGlass(cornerRadius: 16)
         .offset(y: dragOffset)
+        .onTapGesture {
+            onTap()
+        }
         .gesture(
-            DragGesture(minimumDistance: 5)
+            DragGesture(minimumDistance: 10)
                 .updating($dragOffset) { value, state, _ in
                     // 只响应上滑（负值），1:1 跟手
                     state = min(value.translation.height, 0)
                 }
                 .onEnded { value in
-                    let dy = value.translation.height
-                    if dy < -40 {
+                    if value.translation.height < -40 {
                         // 上滑展开
-                        onTap()
-                    } else if abs(dy) < 10 && abs(value.translation.width) < 10 {
-                        // 轻点展开（手势内处理，避免与 DragGesture 冲突）
                         onTap()
                     }
                 }
