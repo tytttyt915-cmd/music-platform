@@ -15,8 +15,6 @@ struct FullPlayerView: View {
     @EnvironmentObject private var theme: ThemeSettings
     @Environment(\.dismiss) private var dismiss
 
-    @State private var sliderValue: Double = 0
-    @State private var isSeeking = false
     @State private var showLyrics = false
     @GestureState private var dragOffset: CGFloat = 0
     @StateObject private var coverColor = CoverColorExtractor()
@@ -164,34 +162,15 @@ struct FullPlayerView: View {
         }
     }
 
-    // MARK: - 进度条（pill，可拖拽）
+    // MARK: - 进度条（波形，可拖拽）
 
     private var progressView: some View {
-        VStack(spacing: 6) {
-            Slider(
-                value: Binding(
-                    get: { isSeeking ? sliderValue : player.currentTime },
-                    set: { sliderValue = $0 }
-                ),
-                in: 0...(player.duration > 0 ? player.duration : 1),
-                onEditingChanged: { editing in
-                    isSeeking = editing
-                    if !editing {
-                        player.seek(to: sliderValue)
-                    }
-                }
-            )
-            .tint(pageAccent)
-
-            HStack {
-                Text(formatDuration(isSeeking ? sliderValue : player.currentTime))
-                Spacer()
-                Text(formatDuration(player.duration))
-            }
-            .font(.caption)
-            .foregroundColor(AppleTheme.secondaryLabel)
-            .monospacedDigit()
-        }
+        // 在线歌曲用服务端预计算波形；本地文件用默认样式
+        WaveformProgressView(
+            trackId: player.currentTrack?.onlineSongId,
+            accentColor: pageAccent
+        )
+        .environmentObject(player)
     }
 
     // MARK: - 玻璃控制条

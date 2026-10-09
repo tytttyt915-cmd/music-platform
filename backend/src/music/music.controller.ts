@@ -91,6 +91,16 @@ export class MusicController {
   }
 
   /**
+   * 波形：100 点 0~1，用于前端波形进度条。
+   * 服务端 ffmpeg 预计算（namida 端侧解码的零耗电版），无缓存时实时算。
+   */
+  @Public()
+  @Get('track/:id/waveform')
+  waveform(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.musicService.getWaveform(id);
+  }
+
+  /**
    * 流媒体入口：查多码率元数据 → 生成预签名 URL → 302 重定向。
    * 实际音频字节由对象存储（经 Nginx/CDN）直接下发，支持 Range 206。
    */

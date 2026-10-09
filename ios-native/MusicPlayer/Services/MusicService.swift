@@ -117,6 +117,13 @@ final class MusicService: ObservableObject {
         )
     }
 
+    /// 波形 100 点 0~1（服务端预计算）
+    func waveform(id: String) async throws -> [Float] {
+        try validateUUID(id)
+        let peaks: [Double] = try await api.get("/music/track/\(id)/waveform")
+        return peaks.map { Float($0) }
+    }
+
     // MARK: - 电台
 
     /// 电台列表（Radio Browser）。tag 为空返回热门。

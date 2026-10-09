@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS track_sources (
     file_size_bytes BIGINT CHECK (file_size_bytes >= 0),
     storage_key     TEXT NOT NULL,             -- OSS / COS object key，下发时动态签名
     duration_ms     INTEGER NOT NULL DEFAULT 0,
+    peaks           JSONB,                     -- 波形 100 点 0~1（服务端 ffmpeg 预计算，namida 端侧方案的零耗电版）
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_track_quality UNIQUE (track_id, quality)
 );

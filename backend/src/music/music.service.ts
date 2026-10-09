@@ -577,6 +577,94 @@ export class MusicService {
     return this.radio.topStations(n);
   }
 
+  // ---------------- 波形（服务端预计算，namida 端侧方案的零耗电版） ----------------
+
+  /**
+   * 波形 100 点 0~1。有缓存直接返回；无缓存则下载音频实时计算并回写。
+   * 前端 Canvas 一次画完（namida CustomPainter 思路）。
+   */
+  async getWaveform(trackId: string): Promise<number[]> {
+    const source = await this.sourcesRepo.findOne({
+      where: { trackId },
+      order: { bitrateKbps: 'ASC' },
+      select: ['id', 'storageKey', 'peaks'],
+    });
+    if (!source) {
+      throw new NotFoundException('歌曲无可用音频');
+    }
+    if (Array.isArray(source.peaks) && source.peaks.length > 0) {
+      return source.peaks;
+    }
+    // 实时计算：预签名 URL → ffmpeg 解码 → 100 点 RMS
+    const peaks = await this.computePeaks(source.storageKey);
+    if (peaks.length > 0) {
+      await this.sourcesRepo.update(source.id, { peaks }).catch(() => {
+        /* 回写失败不阻塞 */
+      });
+    }
+    return peaks;
+  }
+
+  /**
+   * ffmpeg 解码为单声道 8kHz PCM，100 等分取 RMS，归一化 0~1。
+   * 超时 30 秒，失败返回空数组。
+   */
+  private async computePeaks(storageKey: string): Promise<number[]> {
+    const { execFile } = await import('child_process');
+    const { promisify } = await import('util');
+    const execFileAsync = promisify(execFile);
+    try {
+      const url = await this.storage.signGetUrl(storageKey);
+      // ffmpeg 输出 s16le 单声道 8kHz 到 stdout
+      const { stdout } = await execFileAsync(
+        'ffmpeg',
+        [
+          '-v', 'error',
+          '-i', url,
+          '-map', '0:a',
+          '-ac', '1',
+          '-ar', '8000',
+          '-f', 's16le',
+          '-',
+        ],
+        { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024, timeout: 30000 },
+      );
+      const samples = new Int16Array(
+        stdout.buffer,
+        stdout.byteOffset,
+        Math.floor(stdout.byteLength / 2),
+      );
+      if (samples.length === 0) return [];
+      const N = 100;
+      const chunk = Math.max(1, Math.floor(samples.length / N));
+      const peaks: number[] = [];
+      let maxRms = 1e-6;
+      const rmsList: number[] = [];
+      for (let i = 0; i < N; i++) {
+        const start = i * chunk;
+        const end = Math.min(start + chunk, samples.length);
+        let sum = 0;
+        for (let j = start; j < end; j++) {
+          const v = samples[j] / 32768;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / Math.max(1, end - start));
+        rmsList.push(rms);
+        if (rms > maxRms) maxRms = rms;
+      }
+      for (const r of rmsList) {
+        // 平方根压缩动态范围，视觉更接近人耳
+        peaks.push(Math.min(1, Math.sqrt(r / maxRms)));
+      }
+      return peaks;
+    } catch (err) {
+      this.logger.warn(
+        `波形计算失败: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return [];
+    }
+  }
+
   // ---------------- 播放统计（防刷） ----------------
 
   /**

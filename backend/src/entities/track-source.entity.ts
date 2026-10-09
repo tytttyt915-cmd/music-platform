@@ -42,6 +42,9 @@ export class TrackSource {
   @Column({ name: 'duration_ms', type: 'integer', default: 0 })
   durationMs: number;
 
+  @Column({ type: 'jsonb', nullable: true })
+  peaks: number[] | null;
+
   @ManyToOne(() => Track, (track) => track.sources, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'track_id' })
   track: Track;
