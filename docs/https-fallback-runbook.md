@@ -1,8 +1,8 @@
-# Plan B：HTTPS 兜底预案（仅当 v1.0.8 真机仍报 -1022 时启用）
+# Plan B：HTTPS 兜底预案（仅当 v1.1.x 真机仍失败时启用）
 
 > 制定时间：2026-10-09 上午 | 状态：待命，未执行
-> 背景：用户已同意两步计划——① ATS 修复（v1.0.8 已交付，待真机验证）；② 若仍不通，直接上 HTTPS。
-> 本预案仅在用户反馈 v1.0.8 仍失败后启用；若 v1.0.8 成功，本文件作废。
+> 背景：用户已同意两步计划——① ATS 修复（v1.1.1 已交付，待真机验证）；② 若仍不通，直接上 HTTPS。
+> 本预案仅在用户反馈 v1.1.1 仍失败后启用；若 v1.1.1 成功，本文件作废。
 
 ## 1. 买域名（用户操作）
 
@@ -50,3 +50,29 @@
 
 1. 买哪个域名（名字用户定）；
 2. 证书走腾讯云免费 DV 还是 acme.sh/Let's Encrypt。
+
+---
+
+## Plan B2：域名 + NSExceptionDomains 明文例外（v1.1.1 失败时的中间选项）
+
+> 适用条件：v1.1.1 真机结论为"能打开、但游客试听仍报网络错误"（即裸 IP 做 NSExceptionDomains key 被 iOS 忽略但不闪退）。
+> 原理（2026-10-09 下午交叉验证）：① Apple 文档明确 NSAllowsArbitraryLoads 在 NSAllowsLocalNetworking 存在时被忽略（视为 NO）——这就是 v1.0.0 起 -1022 的根因；② NSAllowsLocalNetworking 只放行未限定主机名 / .local / 本地 IP，公网 IP 111.230.155.174 不在其中；③ NSExceptionDomains 的 key 必须是域名，裸 IP 不被支持（v1.0.3 实证闪退，v1.1.1 待验证）。
+> 结论：给服务器套一个真实域名，就可以用"域名 key + NSExceptionAllowsInsecureHTTPLoads"走官方正道，无需证书、无需动 443。
+
+### 步骤
+
+1. 买域名（同 §1：DNSPod `.xyz`/`.top`，¥10–30/年，支付宝，实名认证，A 记录 → `111.230.155.174`）。
+2. App 端：Info.plist 的 NSExceptionDomains 里把 `111.230.155.174` 换成该域名，子键 `NSExceptionAllowsInsecureHTTPLoads = YES`（可选加 `NSIncludesSubdomains = YES`）；**NSAllowsArbitraryLoads + NSAllowsLocalNetworking 双键保留不动**（删键已知导致 v1.0.8/v1.0.9 闪退，勿动）。
+3. API_URL 改为 `http://<域名>`，走现有流水线出包 → Release → manifest → OTA。
+4. 不需要：证书、443 端口、安全组改动、nginx 改动。
+
+### 与 Plan B（HTTPS）的取舍
+
+- B2 更快（只等域名实名，无证书签发等待），改动最小；缺点是流量仍是明文 HTTP（与现状一致，无退步）。
+- 若用户打算长期做，直接上 HTTPS（Plan B）更干净；若只想先让联调跑通，B2 是捷径。
+- 合规提示同 §6（域名解析到境内服务器名义上需 ICP 备案，用户决策）。
+
+### 待用户拍板的点
+
+1. 买哪个域名（名字用户定）；
+2. 走 B2（快、无证书）还是直接 B（HTTPS，一步到位）。
