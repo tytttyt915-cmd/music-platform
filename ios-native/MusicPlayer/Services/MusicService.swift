@@ -1,0 +1,279 @@
+import Combine
+import Foundation
+
+// MARK: - MusicService
+//
+// 职责：
+//   在线曲库的业务接口层，替代老 App 的网易云网关（含多音源聚合；
+//   评论/排行/歌手等 12 个无数据源接口已全部删除）。
+//   对接新后端 NestJS：http://111.230.155.174
+//   - 搜索 /music/search、推荐 /music/feed、详情 /music/track/:id
+//   - 歌词 /music/track/:id/lyrics（LRC 文本，复用老 parseLRC）
+//   - 播放 /music/track/:id/stream → 302 到 COS 预签名 URL。
+//     注意：预签名 URL 有过期时间，禁止缓存，每次播放前重新取。
+//     该接口是公开的（@Public），AVPlayer 可直接拿 URL 播放，原生跟随 302。
+//   - 播放统计 POST /music/track/:id/play（需登录，每次播放必须上报，防刷）
+//   - 歌单：创建 /playlists、详情 /playlists/:id、加歌 /playlists/:id/tracks
+//
+// id 类型：全站 String（UUID v4），后端用 ParseUUIDPipe 强校验。
+// 后端字段 quirks（如 playCount 是字符串）隔离在下方私有 DTO 里，
+// 对外只暴露 Models/OnlineModels.swift 的干净模型。
+
+@MainActor
+final class MusicService: ObservableObject {
+    static let shared = MusicService()
+
+    private let api: APIClient
+
+    init(api: APIClient? = nil) {
+        // 默认走 AuthService 的带认证 client（401 自动刷新）
+        self.api = api ?? AuthService.shared.api
+    }
+
+    // MARK: - 搜索与推荐
+
+    /// 搜索歌曲
+    func search(keyword: String, page: Int = 1, pageSize: Int = 30) async throws -> PagedResult<OnlineSong> {
+        let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw APIError.business(code: -1, message: "搜索关键词不能为空")
+        }
+        let dto: TrackPageDTO = try await api.get(
+            "/music/search",
+            query: ["q": trimmed, "page": "\(page)", "pageSize": "\(pageSize)"]
+        )
+        return dto.toPagedResult()
+    }
+
+    /// 发现页推荐（自有曲库歌曲列表）
+    func feed(page: Int = 1, pageSize: Int = 20) async throws -> PagedResult<OnlineSong> {
+        let dto: TrackPageDTO = try await api.get(
+            "/music/feed",
+            query: ["page": "\(page)", "pageSize": "\(pageSize)"]
+        )
+        return dto.toPagedResult()
+    }
+
+    // MARK: - 歌曲详情与歌词
+
+    /// 歌曲详情
+    func trackDetail(id: String) async throws -> OnlineSong {
+        try validateUUID(id)
+        let dto: TrackDTO = try await api.get("/music/track/\(id)")
+        return dto.toModel()
+    }
+
+    /// 歌词（LRC）。无歌词时返回空数组，不抛错
+    func lyrics(id: String) async throws -> [LyricLine] {
+        try validateUUID(id)
+        let dto: LyricsDTO = try await api.get("/music/track/\(id)/lyrics")
+        guard let lrc = dto.lrcText, !lrc.isEmpty else { return [] }
+        return Self.parseLRC(lrc)
+    }
+
+    // MARK: - 播放
+
+    /// 播放地址：直接返回 /stream 的 URL，AVPlayer 原生跟随 302。
+    /// 禁止缓存返回值（预签名 URL 会过期），每次播放前重新调用。
+    func streamURL(id: String, quality: StreamQuality = .high) throws -> URL {
+        try validateUUID(id)
+        var components = URLComponents(
+            string: APIConfig.platformBase + "/music/track/\(id)/stream"
+        )
+        components?.queryItems = [URLQueryItem(name: "quality", value: quality.rawValue)]
+        guard let url = components?.url else {
+            throw APIError.badURL("/music/track/\(id)/stream")
+        }
+        return url
+    }
+
+    /// 播放统计上报：每次实际开始播放后调用一次（后端做自然日去重防刷）
+    func reportPlay(id: String, quality: StreamQuality = .high) async throws {
+        try validateUUID(id)
+        struct Body: Encodable { let quality: String }
+        let _: EmptyPayload = try await api.post(
+            "/music/track/\(id)/play",
+            body: Body(quality: quality.rawValue),
+            requiresAuth: true
+        )
+    }
+
+    // MARK: - 歌单
+
+    /// 创建歌单
+    func createPlaylist(
+        title: String,
+        coverURL: String? = nil,
+        isPublic: Bool = false
+    ) async throws -> OnlinePlaylist {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw APIError.business(code: -1, message: "歌单标题不能为空")
+        }
+        struct Body: Encodable {
+            let title: String
+            let coverUrl: String?
+            let isPublic: Bool
+        }
+        let dto: PlaylistDTO = try await api.post(
+            "/playlists",
+            body: Body(title: trimmed, coverUrl: coverURL, isPublic: isPublic),
+            requiresAuth: true
+        )
+        return dto.toModel(trackCount: 0)
+    }
+
+    /// 歌单详情（含歌曲列表）
+    func playlistDetail(id: String) async throws -> PlaylistDetail {
+        try validateUUID(id)
+        let dto: PlaylistDetailDTO = try await api.get("/playlists/\(id)", requiresAuth: true)
+        return dto.toModel()
+    }
+
+    /// 歌单加歌
+    func addTrack(playlistID: String, trackID: String) async throws {
+        try validateUUID(playlistID)
+        try validateUUID(trackID)
+        struct Body: Encodable { let trackId: String }
+        let _: EmptyPayload = try await api.post(
+            "/playlists/\(playlistID)/tracks",
+            body: Body(trackId: trackID),
+            requiresAuth: true
+        )
+    }
+
+    // MARK: - LRC 解析（沿用老实现，格式通用）
+
+    static func parseLRC(_ lrc: String) -> [LyricLine] {
+        var lines: [LyricLine] = []
+        // [mm:ss.xx] 文本，支持一行多个时间标签
+        let pattern = #"\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+
+        for rawLine in lrc.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !line.isEmpty else { continue }
+            let range = NSRange(line.startIndex..., in: line)
+            let matches = regex.matches(in: line, range: range)
+            guard !matches.isEmpty else { continue }
+
+            // 去掉所有时间标签，剩下的是歌词文本
+            let text = regex.stringByReplacingMatches(
+                in: line, range: range, withTemplate: ""
+            ).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { continue }
+
+            for match in matches {
+                func group(_ i: Int) -> String? {
+                    let r = match.range(at: i)
+                    guard r.location != NSNotFound,
+                          let swiftRange = Range(r, in: line) else { return nil }
+                    return String(line[swiftRange])
+                }
+                guard let minStr = group(1), let secStr = group(2),
+                      let minutes = Double(minStr), let seconds = Double(secStr) else { continue }
+                var time = minutes * 60 + seconds
+                if let fracStr = group(3), let frac = Double(fracStr) {
+                    // 2 位是百分秒，3 位是毫秒
+                    time += fracStr.count == 3 ? frac / 1000 : frac / 100
+                }
+                lines.append(LyricLine(time: time, text: text))
+            }
+        }
+        return lines.sorted { $0.time < $1.time }
+    }
+
+    // MARK: - 私有
+
+    /// 后端对 :id 用 ParseUUIDPipe(version 4) 强校验，前端先拦一道，报错更友好
+    private func validateUUID(_ id: String) throws {
+        guard UUID(uuidString: id) != nil else {
+            throw APIError.business(code: -1, message: "非法的歌曲 ID：\(id)")
+        }
+    }
+}
+
+// MARK: - 后端 DTO（私有，字段 quirks 隔离在这里）
+
+/// 后端 Track：注意 playCount 在 DB 是 bigint，序列化为字符串
+private struct TrackDTO: Decodable {
+    let id: String
+    let title: String
+    let artist: String?
+    let coverUrl: String?
+    let durationMs: Int?
+    let playCount: String?
+    let status: String?
+
+    func toModel() -> OnlineSong {
+        let playCountInt = playCount.flatMap(Int.init) ?? 0
+        let artistName: String = {
+            guard let name = artist, !name.isEmpty else { return "未知歌手" }
+            return name
+        }()
+        return OnlineSong(
+            id: id,
+            title: title,
+            artist: artistName,
+            album: "",
+            coverURL: coverUrl.flatMap(URL.init(string:)),
+            duration: Double(durationMs ?? 0) / 1000.0,
+            playCount: playCountInt
+        )
+    }
+}
+
+private struct TrackPageDTO: Decodable {
+    let list: [TrackDTO]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+
+    func toPagedResult() -> PagedResult<OnlineSong> {
+        PagedResult(
+            items: list.map { $0.toModel() },
+            total: total, page: page, pageSize: pageSize
+        )
+    }
+}
+
+private struct LyricsDTO: Decodable {
+    let lrcText: String?
+    let lrcSynced: Bool?
+}
+
+private struct PlaylistDTO: Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let isPublic: Bool?
+
+    func toModel(trackCount: Int) -> OnlinePlaylist {
+        OnlinePlaylist(
+            id: id,
+            title: title,
+            coverURL: coverUrl.flatMap(URL.init(string:)),
+            creator: "",
+            trackCount: trackCount,
+            description: ""
+        )
+    }
+}
+
+private struct PlaylistDetailDTO: Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let isPublic: Bool?
+    let tracks: [TrackDTO]?
+
+    func toModel() -> PlaylistDetail {
+        let songs = (tracks ?? []).map { $0.toModel() }
+        return PlaylistDetail(
+            playlist: PlaylistDTO(
+                id: id, title: title, coverUrl: coverUrl, isPublic: isPublic
+            ).toModel(trackCount: songs.count),
+            songs: songs
+        )
+    }
+}
