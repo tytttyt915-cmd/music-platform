@@ -1,0 +1,1 @@
+{"description":"音乐推荐 Agent 原型：OpenMAIC 多智能体模式（Director + 白板账本），规则引擎模拟，无 LLM","name":"music-agent-prototype","private":true,"scripts":{"start":"npx tsx src/index.ts"},"version":"0.1.0"}

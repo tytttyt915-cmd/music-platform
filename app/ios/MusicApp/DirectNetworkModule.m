@@ -1,11 +1,19 @@
 #import "DirectNetworkModule.h"
 
 @interface DirectNetworkModule () <NSURLSessionDelegate>
+@property (nonatomic, strong) NSMutableSet<NSURLSession *> *activeSessions;
 @end
 
 @implementation DirectNetworkModule
 
 RCT_EXPORT_MODULE();
+
+- (instancetype)init {
+  if (self = [super init]) {
+    _activeSessions = [NSMutableSet set];
+  }
+  return self;
+}
 
 /**
  * 直接用 NSURLSession 发请求，绕过 RCTNetworking。
@@ -41,15 +49,21 @@ RCT_EXPORT_METHOD(sendRequest:(NSString *)url
 
   NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
   // 用 delegate 来处理自签名证书的信任
+  // 必须强引用 session，否则方法返回后 session 被释放，delegate 收不到 challenge
   NSURLSession *session = [NSURLSession sessionWithConfiguration:config
                                                         delegate:self
                                                    delegateQueue:nil];
+  @synchronized (self.activeSessions) {
+    [self.activeSessions addObject:session];
+  }
 
-  // 把 resolver/rejecter 存起来，delegate 回调时用
-  // 为简化，用关联对象或直接在 completionHandler 里处理
-  // 注意：delegate 方法会在 challenge 时被调用
   NSURLSessionDataTask *task = [session dataTaskWithRequest:request
     completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+      // 请求完成，释放 session
+      @synchronized (self.activeSessions) {
+        [self.activeSessions removeObject:session];
+      }
+
       if (error) {
         NSString *detail = [NSString stringWithFormat:@"%@ (code=%ld, domain=%@)",
           error.localizedDescription, (long)error.code, error.domain];
