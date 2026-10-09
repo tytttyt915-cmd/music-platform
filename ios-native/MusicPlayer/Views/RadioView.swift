@@ -46,60 +46,15 @@ struct RadioView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                 } else if let errorMessage {
-                    VStack(spacing: 12) {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.largeTitle)
-                            .foregroundColor(AppleTheme.secondaryLabel)
-                        Text(errorMessage)
-                            .foregroundColor(AppleTheme.secondaryLabel)
-                        Button("重试") { load() }.buttonStyle(.bordered)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                    RadioErrorView(message: errorMessage, onRetry: load)
                 } else {
                     LazyVStack(spacing: 0) {
                         ForEach(stations) { station in
-                            Button {
-                                play(station)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.blue.opacity(0.15))
-                                            .frame(width: 48, height: 48)
-                                        Image(systemName: "radio")
-                                            .foregroundColor(Color.blue)
-                                    }
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(station.name)
-                                            .font(.body)
-                                            .foregroundColor(AppleTheme.label)
-                                            .lineLimit(1)
-                                        HStack(spacing: 6) {
-                                            if let country = station.country {
-                                                Text(country)
-                                            }
-                                            if station.bitrate > 0 {
-                                                Text("\(station.bitrate)kbps")
-                                            }
-                                        }
-                                        .font(.caption)
-                                        .foregroundColor(AppleTheme.secondaryLabel)
-                                    }
-                                    Spacer()
-                                    if player.currentTrack?.title == station.name && player.isPlaying {
-                                        EqualizerBars()
-                                    } else {
-                                        Image(systemName: "play.circle")
-                                            .font(.title2)
-                                            .foregroundColor(AppleTheme.secondaryLabel)
-                                    }
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                            }
-                            .pressable()
-                            Divider().padding(.leading, 76)
+                            RadioStationRow(
+                                station: station,
+                                isPlaying: player.currentTrack?.title == station.name && player.isPlaying,
+                                onPlay: { play(station) }
+                            )
                         }
                     }
                 }
@@ -159,5 +114,82 @@ private struct RadioTagButton: View {
                 .foregroundColor(isSelected ? Color.blue : AppleTheme.label)
         }
         .pressable()
+    }
+}
+
+// MARK: - 电台错误视图
+private struct RadioErrorView: View {
+    let message: String
+    let onRetry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.largeTitle)
+                .foregroundColor(AppleTheme.secondaryLabel)
+            Text(message)
+                .foregroundColor(AppleTheme.secondaryLabel)
+            Button("重试", action: onRetry).buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 40)
+    }
+}
+
+// MARK: - 电台行
+private struct RadioStationRow: View {
+    let station: RadioStationItem
+    let isPlaying: Bool
+    let onPlay: () -> Void
+
+    var body: some View {
+        Button(action: onPlay) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.blue.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: "radio")
+                        .foregroundColor(Color.blue)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(station.name)
+                        .font(.body)
+                        .foregroundColor(AppleTheme.label)
+                        .lineLimit(1)
+                    RadioMetaRow(station: station)
+                }
+                Spacer()
+                if isPlaying {
+                    EqualizerBars()
+                } else {
+                    Image(systemName: "play.circle")
+                        .font(.title2)
+                        .foregroundColor(AppleTheme.secondaryLabel)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .pressable()
+        Divider().padding(.leading, 76)
+    }
+}
+
+// MARK: - 电台元信息行
+private struct RadioMetaRow: View {
+    let station: RadioStationItem
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let country = station.country {
+                Text(country)
+            }
+            if station.bitrate > 0 {
+                Text("\(station.bitrate)kbps")
+            }
+        }
+        .font(.caption)
+        .foregroundColor(AppleTheme.secondaryLabel)
     }
 }
