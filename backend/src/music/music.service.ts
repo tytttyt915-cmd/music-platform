@@ -24,7 +24,10 @@ import {
   MusicBrainzService,
 } from '../external/musicbrainz.service';
 import { PlatformAggregatorService } from '../external/platforms/platform-aggregator.service';
-import { PlatformTrack } from '../external/platforms/platform.types';
+import {
+  MusicPlatform,
+  PlatformTrack,
+} from '../external/platforms/platform.types';
 import { RadioService, RadioStation } from '../external/radio.service';
 
 export interface PageResult<T> {
@@ -232,7 +235,7 @@ export class MusicService {
    * 前端传 platform + platformId，后端代理获取真实直链。
    */
   async getPlatformPlayUrl(
-    platform: 'netease' | 'qq' | 'kugou',
+    platform: MusicPlatform,
     platformId: string,
     quality: 'standard' | 'high' | 'lossless' = 'high',
   ): Promise<string | null> {
@@ -243,7 +246,7 @@ export class MusicService {
    * 获取国内平台歌曲的歌词。
    */
   async getPlatformLyric(
-    platform: 'netease' | 'qq' | 'kugou',
+    platform: MusicPlatform,
     platformId: string,
   ): Promise<string | null> {
     return this.platforms.getLyric(platform, platformId);
@@ -378,7 +381,7 @@ export class MusicService {
     track: { id: string; title: string; artist: string; durationMs: number; preferredSource: string },
     quality: string,
   ): Promise<string | null> {
-    const platform = track.preferredSource as 'netease' | 'qq' | 'kugou';
+    const platform = track.preferredSource as MusicPlatform;
     // 1. 读换源时缓存的 platformId
     const cacheKey = `track:platform-match:${track.id}:${platform}`;
     let platformId: string | null = null;
@@ -494,7 +497,7 @@ export class MusicService {
         track.title,
         track.artist,
         track.durationMs,
-        source as 'netease' | 'qq' | 'kugou',
+        source as MusicPlatform,
       );
       if (!match) {
         throw new NotFoundException(`平台 ${source} 无可用匹配`);
@@ -522,7 +525,7 @@ export class MusicService {
     title: string,
     artist: string,
     durationMs: number,
-    platform: 'netease' | 'qq' | 'kugou',
+    platform: MusicPlatform,
   ): Promise<PlatformTrack | null> {
     const keyword = `${title} ${artist}`.trim();
     let candidates: PlatformTrack[] | null = null;

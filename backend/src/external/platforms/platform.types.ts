@@ -7,14 +7,20 @@
  * - 平台曲目带 platform 标记，前端不得与本地曲目混淆
  */
 
-export type MusicPlatform = 'netease' | 'qq' | 'kugou';
+/**
+ * 付费音源（聆澜赞助版 API）覆盖的平台代号。
+ * 与免费 sidecar 的 'netease'/'qq'/'kugou' 区分开，避免混淆。
+ */
+export type PaidSourcePlatform = 'kg' | 'kw' | 'mg' | 'tx' | 'wy';
+
+export type MusicPlatform = 'netease' | 'qq' | 'kugou' | PaidSourcePlatform;
 
 export type AudioQuality = 'standard' | 'high' | 'lossless';
 
 /** 平台侧曲目（搜索/推荐结果） */
 export interface PlatformTrack {
   platform: MusicPlatform;
-  /** 平台侧歌曲 ID（网易云为数字 id，QQ 为 songmid，酷狗为 hash） */
+  /** 平台侧歌曲 ID（网易云为数字 id，QQ 为 songmid，酷狗为 hash；付费音源为各平台 songId/hash） */
   platformId: string;
   title: string;
   artist: string;

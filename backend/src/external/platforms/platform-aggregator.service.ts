@@ -1,6 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NeteaseService } from './netease.service';
 import {
+  KgPaidSourceService,
+  KwPaidSourceService,
+  MgPaidSourceService,
+  TxPaidSourceService,
+  WyPaidSourceService,
+} from './paid-source.service';
+import {
   AudioQuality,
   IPlatformService,
   MusicPlatform,
@@ -17,9 +24,18 @@ export class PlatformAggregatorService {
   private readonly logger = new Logger(PlatformAggregatorService.name);
   private readonly services: IPlatformService[];
 
-  constructor(private readonly netease: NeteaseService) {
+  constructor(
+    private readonly netease: NeteaseService,
+    private readonly kg: KgPaidSourceService,
+    private readonly kw: KwPaidSourceService,
+    private readonly mg: MgPaidSourceService,
+    private readonly tx: TxPaidSourceService,
+    private readonly wy: WyPaidSourceService,
+  ) {
     // Phase 2 在此追加 qqmusic、kugou
-    this.services = [netease];
+    // 付费音源（kg/kw/mg/tx/wy）：纯 URL 解析，无搜索接口；
+    // 未配置 PAID_SOURCE_API_KEY 时自动禁用，不影响聚合
+    this.services = [netease, kg, kw, mg, tx, wy];
   }
 
   /** 启用的平台列表（供健康检查/前端展示） */

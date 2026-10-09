@@ -18,6 +18,7 @@ import {
   CurrentUser,
 } from '../common/decorators/current-user.decorator';
 import { FeedQueryDto, SearchQueryDto } from './dto/music-query.dto';
+import { MusicPlatform } from '../external/platforms/platform.types';
 import { StreamQueryDto } from './dto/stream-query.dto';
 import { MusicService } from './music.service';
 
@@ -131,7 +132,11 @@ export class MusicController {
     @Query('quality') quality: string,
     @Res() res: Response,
   ) {
-    if (!['netease', 'qq', 'kugou'].includes(platform)) {
+    if (
+      !['netease', 'qq', 'kugou', 'kg', 'kw', 'mg', 'tx', 'wy'].includes(
+        platform,
+      )
+    ) {
       res.status(400).json({ code: 400, message: '不支持的平台' });
       return;
     }
@@ -142,7 +147,7 @@ export class MusicController {
     const q =
       quality === 'lossless' || quality === 'standard' ? quality : 'high';
     const url = await this.musicService.getPlatformPlayUrl(
-      platform as 'netease' | 'qq' | 'kugou',
+      platform as MusicPlatform,
       platformId,
       q as 'standard' | 'high' | 'lossless',
     );
@@ -162,11 +167,16 @@ export class MusicController {
     @Param('platform') platform: string,
     @Query('id') platformId: string,
   ) {
-    if (!['netease', 'qq', 'kugou'].includes(platform) || !platformId) {
+    if (
+      !['netease', 'qq', 'kugou', 'kg', 'kw', 'mg', 'tx', 'wy'].includes(
+        platform,
+      ) ||
+      !platformId
+    ) {
       return { code: 400, message: '参数错误' };
     }
     const lyric = await this.musicService.getPlatformLyric(
-      platform as 'netease' | 'qq' | 'kugou',
+      platform as MusicPlatform,
       platformId,
     );
     return { code: 0, message: 'ok', data: { lyric, platform } };

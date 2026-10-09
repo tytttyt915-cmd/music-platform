@@ -99,6 +99,15 @@ export default () => ({
       timeoutMs: process.env.NETEASE_TIMEOUT_MS ?? '8000',
       maxResults: process.env.NETEASE_MAX_RESULTS ?? '10',
     },
+    // 付费音源（聆澜赞助版 API）：kg/kw/mg/tx/wy 五平台 URL 解析
+    // API Key 必须走环境变量 PAID_SOURCE_API_KEY，未配置时服务自动禁用
+    paid: {
+      enabled: process.env.PAID_SOURCE_ENABLED ?? 'true',
+      apiKey: process.env.PAID_SOURCE_API_KEY ?? '',
+      baseUrl:
+        process.env.PAID_SOURCE_BASE_URL ?? 'https://source.shiqianjiang.cn/api',
+      timeoutMs: process.env.PAID_SOURCE_TIMEOUT_MS ?? '15000',
+    },
     // Phase 2 预留
     qqmusic: {
       enabled: process.env.QQMUSIC_ENABLED ?? 'false',
