@@ -98,14 +98,31 @@ RCT_EXPORT_METHOD(sendRequest:(NSString *)url
 /**
  * 处理服务器信任挑战：接受自签名证书。
  * 仅用于我们自己的服务器 IP（111.230.155.174）。
+ * Session 级别
  */
 - (void)URLSession:(NSURLSession *)session
 didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
  completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler
 {
+  [self handleChallenge:challenge completionHandler:completionHandler];
+}
+
+/**
+ * Task 级别（dataTaskWithRequest:completionHandler: 可能会走这里）
+ */
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+ completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler
+{
+  [self handleChallenge:challenge completionHandler:completionHandler];
+}
+
+- (void)handleChallenge:(NSURLAuthenticationChallenge *)challenge
+      completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential *))completionHandler
+{
   if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
     NSString *host = challenge.protectionSpace.host;
-    // 只信任我们自己的服务器 IP
     if ([host isEqualToString:@"111.230.155.174"]) {
       NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
       completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
