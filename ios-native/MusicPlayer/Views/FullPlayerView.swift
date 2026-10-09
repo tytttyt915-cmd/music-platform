@@ -20,6 +20,8 @@ struct FullPlayerView: View {
     @State private var showLyrics = false
     @GestureState private var dragOffset: CGFloat = 0
     @StateObject private var coverColor = CoverColorExtractor()
+    @State private var showSleepTimer = false
+    @ObservedObject private var sleepTimer = SleepTimerManager.shared
 
     private var dismissThreshold: CGFloat { 140 }
 
@@ -37,9 +39,23 @@ struct FullPlayerView: View {
             VStack(spacing: 0) {
                 // 顶部把手 + 关闭
                 HStack {
+                    Spacer(minLength: 44)
                     Capsule()
                         .fill(AppleTheme.tertiaryLabel.opacity(0.5))
                         .frame(width: 36, height: 5)
+                    Spacer(minLength: 0)
+                    // 睡眠定时入口
+                    Button { showSleepTimer = true } label: {
+                        Image(systemName: sleepTimer.isActive ? "moon.zzz.fill" : "moon.zzz")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(sleepTimer.isActive ? pageAccent : AppleTheme.secondaryLabel)
+                            .frame(width: 44, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .pressable()
+                    .sheet(isPresented: $showSleepTimer) {
+                        SleepTimerView()
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)

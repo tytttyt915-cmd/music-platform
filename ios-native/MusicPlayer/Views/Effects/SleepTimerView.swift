@@ -35,17 +35,19 @@ struct SleepTimerView: View {
                     ForEach(presets, id: \.0) { name, seconds in
                         Button {
                             if seconds > 0 {
-                                timer.start(seconds: seconds)
+                                timer.start(seconds: seconds, presetLabel: name)
+                            } else {
+                                // -1 = 播完当前这首
+                                timer.startFinishCurrentSong()
                             }
                             dismiss()
                         } label: {
                             HStack {
                                 Text(name)
                                 Spacer()
-                                if timer.isActive {
+                                if timer.activePreset == name {
                                     Image(systemName: "checkmark")
                                         .foregroundColor(AppleTheme.accent)
-                                        .opacity(0) // 占位，保持对齐
                                 }
                             }
                         }
