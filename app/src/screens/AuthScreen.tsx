@@ -150,7 +150,7 @@ export default function AuthScreen({visible, onClose, onSuccess}: Props) {
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
           <Text style={styles.headerTitle}>登录 / 注册</Text>
-          <Text style={styles.versionText}>v1.1.0</Text>
+          <Text style={styles.versionText}>v1.1.1</Text>
         </View>
 
         {/* 微信登录 */}
