@@ -395,6 +395,96 @@ def playlist_list(ctx):
          hint="用 playlist create 建歌单后，自行保存返回的 id；再用 playlist detail 查看")
 
 
+@cli.command()
+@click.argument("track_id")
+@click.pass_context
+def predict(ctx, track_id):
+    """单首歌未来 7 天热度预测（TimesFM；不可用时降级提示）。"""
+    check_uuid(track_id, _pretty(ctx))
+    data = _api(ctx).request("GET", f"/music/track/{track_id}/predict")
+    emit({"ok": True, "data": data}, _pretty(ctx))
+
+
+@cli.command()
+@click.option("--source", default="musicbrainz",
+              type=click.Choice(["musicbrainz", "itunes", "html"]),
+              show_default=True, help="元数据源")
+@click.option("--query", default="", help="搜索关键词（itunes/musicbrainz）")
+@click.option("--url", default="", help="html 模式的目标页面")
+@click.option("--limit", default=20, show_default=True, type=int,
+              help="抓取条数上限")
+@click.option("--import-sql", "import_sql", default="",
+              help="同时生成导入 SQL 到指定文件")
+@click.pass_context
+def crawl(ctx, source, query, url, limit, import_sql):
+    """爬歌曲元数据（仅元数据，不碰音频）。
+    例：python3 -m music_cli crawl --query "artist:周杰伦" --limit 10
+    """
+    import subprocess
+    import tempfile
+    import os
+
+    if source in ("musicbrainz", "itunes") and not query.strip():
+        fail("需要 --query 关键词", _pretty(ctx))
+    if source == "html" and not url.strip():
+        fail("html 模式需要 --url", _pretty(ctx))
+
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "..", "..", "backend", "scripts",
+                          "crawl-metadata.py")
+    script = os.path.normpath(script)
+    if not os.path.exists(script):
+        fail(f"找不到爬虫脚本：{script}", _pretty(ctx))
+
+    with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False,
+            encoding="utf-8") as tf:
+        tmp_json = tf.name
+    result: dict = {"ok": True}
+    try:
+        cmd = [sys.executable, script, "--source", source,
+               "--limit", str(limit), "--out", tmp_json]
+        if query:
+            cmd += ["--query", query]
+        if url:
+            cmd += ["--url", url]
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              timeout=180)
+        if proc.returncode != 0:
+            fail(f"爬虫失败：{proc.stderr.strip() or proc.stdout.strip()}",
+                 _pretty(ctx))
+        with open(tmp_json, encoding="utf-8") as f:
+            payload = json.load(f)
+        result.update({"count": payload.get("count", 0),
+                       "items": payload.get("items", [])})
+        if import_sql:
+            imp_script = os.path.join(os.path.dirname(script),
+                                      "import-metadata.py")
+            proc2 = subprocess.run(
+                [sys.executable, imp_script, "--in", tmp_json,
+                 "--out", import_sql],
+                capture_output=True, text=True, timeout=60)
+            if proc2.returncode != 0:
+                result["importSqlError"] = proc2.stderr.strip()
+            else:
+                result["importSql"] = import_sql
+                result["importHint"] = (
+                    "在服务器执行：docker exec -i "
+                    "$(docker ps -q --filter \"name=postgres\") "
+                    f"psql -U music -d musicdb -f {import_sql}")
+    except subprocess.TimeoutExpired:
+        fail("爬虫超时（180s）", _pretty(ctx))
+    except json.JSONDecodeError as e:
+        fail(f"爬虫输出解析失败：{e}", _pretty(ctx))
+    finally:
+        try:
+            os.unlink(tmp_json)
+        except OSError:
+            pass
+
+    emit(result, _pretty(ctx))
+
+
 def main():
     cli(obj={})
 

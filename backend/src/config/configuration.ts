@@ -56,4 +56,36 @@ export default () => ({
       secretKey: process.env.COS_SECRET_KEY ?? '',
     },
   },
+
+  prediction: {
+    enabled: process.env.PREDICTION_ENABLED ?? 'true',
+    timesfmUrl: process.env.TIMESFM_URL ?? 'http://127.0.0.1:8100',
+    cacheTtlSec: process.env.PREDICTION_CACHE_TTL ?? '3600',
+    candidateLimit: process.env.PREDICTION_CANDIDATES ?? '300',
+    requestTimeoutMs: process.env.PREDICTION_TIMEOUT_MS ?? '15000',
+  },
+
+  // 第三方免费音乐 API（全都不用 key），单个服务挂了只降级不影响主流程
+  external: {
+    lyricsOvh: {
+      enabled: process.env.LYRICSOVH_ENABLED ?? 'true',
+      baseUrl: process.env.LYRICSOVH_BASE_URL ?? 'https://api.lyrics.ovh',
+      timeoutMs: process.env.LYRICSOVH_TIMEOUT_MS ?? '5000',
+    },
+    musicbrainz: {
+      enabled: process.env.MUSICBRAINZ_ENABLED ?? 'true',
+      baseUrl: process.env.MUSICBRAINZ_BASE_URL ?? 'https://musicbrainz.org',
+      userAgent:
+        process.env.MUSICBRAINZ_USER_AGENT ??
+        'music-platform/1.0 (https://github.com/tytttyt915-cmd/music-platform)',
+      timeoutMs: process.env.MUSICBRAINZ_TIMEOUT_MS ?? '5000',
+    },
+    itunes: {
+      enabled: process.env.ITUNES_ENABLED ?? 'true',
+      baseUrl: process.env.ITUNES_BASE_URL ?? 'https://itunes.apple.com',
+      country: process.env.ITUNES_COUNTRY ?? 'CN',
+      timeoutMs: process.env.ITUNES_TIMEOUT_MS ?? '5000',
+      maxResults: process.env.ITUNES_MAX_RESULTS ?? '5',
+    },
+  },
 });

@@ -15,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
 import { AccountModule } from './account/account.module';
 import { MusicModule } from './music/music.module';
 import { PlaylistModule } from './playlist/playlist.module';
+import { PredictionModule } from './prediction/prediction.module';
 import { User } from './entities/user.entity';
 import { Track } from './entities/track.entity';
 import { TrackSource } from './entities/track-source.entity';
@@ -59,6 +60,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
     HealthModule,
     AuthModule,
     AccountModule,
+    PredictionModule,
     MusicModule,
     PlaylistModule,
   ],

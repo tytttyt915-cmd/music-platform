@@ -80,6 +80,8 @@ python3 -m music_cli delete-account --yes
 | `track <uuid>` | GET /music/track/:id | 否 |
 | `lyrics <uuid>` | GET /music/track/:id/lyrics | 否 |
 | `stream <uuid>` | GET /music/track/:id/stream | 否 |
+| `predict <uuid>` | GET /music/track/:id/predict | 否 |
+| `crawl --query <q>` | （本地爬虫） | 否 |
 | `play <uuid>` | POST /music/track/:id/play | 是 |
 | `playlist create` | POST /playlists | 是 |
 | `playlist detail <uuid>` | GET /playlists/:id | 是 |
@@ -92,3 +94,5 @@ python3 -m music_cli delete-account --yes
 - `stream` 返回 302 跳转的 COS 预签名 URL（有过期时间），每次播放现取，不要缓存。
 - 输出统一为 JSON：`{"ok": true, "data": ...}` 或 `{"ok": false, "error": "...", "hint": "..."}`。
 - token 存 `~/.music_cli_token`（0600 权限），不硬编码。
+- `predict` 调 TimesFM 预测未来 7 天热度；无历史/服务不可用时返回 `fallbackReason`。
+- `crawl` 只抓元数据（标题/歌手/专辑/封面），不碰音频；`--import-sql` 生成 SQL 文件后按提示在服务器用 psql 导入。

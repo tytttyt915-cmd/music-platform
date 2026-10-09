@@ -27,7 +27,7 @@ export class MusicController {
   @Public()
   @Get('feed')
   feed(@Query() query: FeedQueryDto) {
-    return this.musicService.feed(query.page, query.pageSize);
+    return this.musicService.feed(query.page, query.pageSize, query.sort);
   }
 
   @Public()
@@ -46,6 +46,13 @@ export class MusicController {
   @Get('track/:id/lyrics')
   lyrics(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.musicService.getLyrics(id);
+  }
+
+  /** 单首歌未来 7 天热度预测（TimesFM；不可用时降级）。 */
+  @Public()
+  @Get('track/:id/predict')
+  predict(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.musicService.predictTrack(id);
   }
 
   /**
