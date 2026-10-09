@@ -11,6 +11,7 @@ final class CoverColorExtractor: ObservableObject {
     private static let ciContext = CIContext(options: nil)
 
     /// 传入新的封面 URL，异步提取主色
+    @MainActor
     func extract(from url: URL?) {
         task?.cancel()
         guard let url = url else {

@@ -89,7 +89,7 @@ struct SourceSwitchView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundColor(AppleTheme.accent)
+                    .foregroundColor(Color.blue)
                     .frame(width: 24)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
@@ -104,7 +104,7 @@ struct SourceSwitchView: View {
                     ProgressView()
                 } else if isCurrent {
                     Image(systemName: "checkmark")
-                        .foregroundColor(AppleTheme.accent)
+                        .foregroundColor(Color.blue)
                 }
             }
         }

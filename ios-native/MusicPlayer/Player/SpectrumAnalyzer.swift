@@ -55,14 +55,14 @@ final class SpectrumAnalyzer {
                 unprepare: spectrumTapUnprepare,
                 process: spectrumTapProcess
             )
-            var tapOut: MTAudioProcessingTap?
+            var tapOut: Unmanaged<MTAudioProcessingTap>?
             let status = MTAudioProcessingTapCreate(
                 kCFAllocatorDefault,
                 &callbacks,
                 kMTAudioProcessingTapCreationFlag_PostEffects,
                 &tapOut
             )
-            guard status == noErr, let created = tapOut else { return }
+            guard status == noErr, let created = tapOut?.takeRetainedValue() else { return }
             tap = created
         }
         guard let tap = tap else { return }
@@ -157,7 +157,7 @@ final class SpectrumAnalyzer {
                         vDSP_ctoz(complex, 2, &split, 1, vDSP_Length(n / 2))
                     }
                 }
-                vDSP_fft_zrip(fftSetup, &split, 1, log2n, FFT_FORWARD)
+                vDSP_fft_zrip(fftSetup, &split, 1, log2n, FFTDirection(FFT_FORWARD))
                 vDSP_zvmags(&split, 1, &mags, 1, vDSP_Length(n / 2))
             }
         }
@@ -205,7 +205,7 @@ final class SpectrumAnalyzer {
 
 private func spectrumTapInit(
     _ tap: MTAudioProcessingTap,
-    _ clientInfo: UnsafeMutableRawPointer,
+    _ clientInfo: UnsafeMutableRawPointer?,
     _ tapStorageOut: UnsafeMutablePointer<UnsafeMutableRawPointer?>
 ) {
     tapStorageOut.pointee = clientInfo

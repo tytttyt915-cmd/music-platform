@@ -7,7 +7,7 @@ import SwiftUI
 struct WaveformProgressView: View {
     /// 后端曲目 UUID（在线歌曲）；本地文件传 nil 则用默认样式
     var trackId: String?
-    var accentColor: Color = AppleTheme.accent
+    var accentColor: Color = Color.blue
 
     @EnvironmentObject private var player: AudioPlayerManager
     @State private var peaks: [Float] = []

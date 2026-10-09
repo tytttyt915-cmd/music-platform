@@ -50,6 +50,7 @@ class AudioPlayerManager: ObservableObject {
     }
 
     /// 播放平台歌曲（网易云/QQ/酷狗）：直链经后端 302，AVPlayer 原生跟随
+    @MainActor
     func playPlatformTracks(_ songs: [PlatformTrack], startAt index: Int = 0) {
         let tracks: [Track] = songs.compactMap { song in
             guard let url = try? MusicService.shared.platformStreamURL(

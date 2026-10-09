@@ -24,7 +24,7 @@ struct SleepTimerView: View {
                             Spacer()
                             Text(timer.isFadingOut ? "正在淡出…" : timer.remainingText)
                                 .font(.body.monospacedDigit())
-                                .foregroundColor(AppleTheme.accent)
+                                .foregroundColor(Color.blue)
                         }
                         Button("取消定时", role: .destructive) {
                             timer.cancel()
@@ -47,7 +47,7 @@ struct SleepTimerView: View {
                                 Spacer()
                                 if timer.activePreset == name {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(AppleTheme.accent)
+                                        .foregroundColor(Color.blue)
                                 }
                             }
                         }

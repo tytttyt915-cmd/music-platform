@@ -28,25 +28,14 @@ struct RadioView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(tags, id: \.self) { tag in
-                            Button {
-                                selectedTag = tag == "热门" ? "" : tag
-                                load()
-                            } label: {
-                                Text(tag)
-                                    .font(.subheadline)
-                                    .fontWeight(selectedTag == (tag == "热门" ? "" : tag) ? .semibold : .regular)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(selectedTag == (tag == "热门" ? "" : tag)
-                                                  ? AppleTheme.accent.opacity(0.2)
-                                                  : AppleTheme.secondaryLabel.opacity(0.12))
-                                    )
-                                    .foregroundColor(selectedTag == (tag == "热门" ? "" : tag)
-                                                     ? AppleTheme.accent : AppleTheme.label)
-                            }
-                            .pressable()
+                            RadioTagButton(
+                                tag: tag,
+                                isSelected: selectedTag == (tag == "热门" ? "" : tag),
+                                onTap: {
+                                    selectedTag = tag == "热门" ? "" : tag
+                                    load()
+                                }
+                            )
                         }
                     }
                     .padding(.horizontal, 16)
@@ -76,10 +65,10 @@ struct RadioView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 10)
-                                            .fill(AppleTheme.accent.opacity(0.15))
+                                            .fill(Color.blue.opacity(0.15))
                                             .frame(width: 48, height: 48)
                                         Image(systemName: "radio")
-                                            .foregroundColor(AppleTheme.accent)
+                                            .foregroundColor(Color.blue)
                                     }
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(station.name)
@@ -145,5 +134,30 @@ struct RadioView: View {
             fileURL: url
         )
         player.playURLDirect(url, track: track)
+    }
+}
+
+// MARK: - 标签按钮（拆分出来避免 body 类型检查超时）
+private struct RadioTagButton: View {
+    let tag: String
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            Text(tag)
+                .font(.subheadline)
+                .fontWeight(isSelected ? .semibold : .regular)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected
+                              ? Color.blue.opacity(0.2)
+                              : AppleTheme.secondaryLabel.opacity(0.12))
+                )
+                .foregroundColor(isSelected ? Color.blue : AppleTheme.label)
+        }
+        .pressable()
     }
 }
