@@ -15,6 +15,8 @@ struct DiscoverView: View {
     @State private var keyword = ""
     @State private var songs: [OnlineSong] = []
     @State private var platformSongs: [PlatformTrack] = []
+    /// 后端启用的平台（platformEnabled）：含付费平台，仅后端配置 Key 时出现
+    @State private var enabledPlatforms: [String] = []
     @State private var page = 1
     @State private var hasMore = true
     @State private var isLoading = false
@@ -22,6 +24,22 @@ struct DiscoverView: View {
     @State private var sourceSwitchSong: OnlineSong?
 
     private var isSearchMode: Bool { !keyword.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// 平台结果按平台分组（网易云/QQ/酷狗/付费音源各一段），固定顺序
+    private var groupedPlatformSongs: [(platform: String, songs: [PlatformTrack])] {
+        let grouped = Dictionary(grouping: platformSongs, by: { $0.platform })
+        let order = ["netease", "qq", "kugou", "wy", "kg", "kw", "mg", "tx"]
+        return grouped.keys.sorted {
+            let a = order.firstIndex(of: $0) ?? Int.max
+            let b = order.firstIndex(of: $1) ?? Int.max
+            return a < b
+        }.map { ($0, grouped[$0] ?? []) }
+    }
+
+    /// 已启用的付费平台（换源菜单用；无 Key 时为空，菜单不显示）
+    private var enabledPaidPlatforms: [String] {
+        enabledPlatforms.filter { PlatformTrack.paidPlatforms.contains($0) }
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -68,24 +86,50 @@ struct DiscoverView: View {
                                     .padding(.leading, 64)
                             }
                         }
-                        // 平台结果（网易云/QQ/酷狗）：仅搜索模式
+                        // 平台结果（网易云/QQ/酷狗/付费音源）：仅搜索模式，按平台分组
                         if isSearchMode && !platformSongs.isEmpty {
-                            sectionHeader("网易云", count: platformSongs.count)
-                            ForEach(Array(platformSongs.enumerated()), id: \.element.id) { idx, song in
-                                Button {
-                                    player.playPlatformTracks(platformSongs, startAt: idx)
-                                } label: {
-                                    PlatformSongRow(
-                                        song: song,
-                                        isPlaying: player.currentTrack?.platform == song.platform
-                                            && player.currentTrack?.title == song.title
-                                            && player.isPlaying
-                                    )
+                            ForEach(groupedPlatformSongs, id: \.platform) { group in
+                                sectionHeader(
+                                    PlatformTrack.displayName(for: group.platform),
+                                    count: group.songs.count
+                                )
+                                ForEach(Array(group.songs.enumerated()), id: \.element.id) { idx, song in
+                                    // 在分组内的序号 → 映射回 platformSongs 全局序号，保证队列顺序
+                                    let globalIdx = platformSongs.firstIndex(of: song) ?? 0
+                                    Button {
+                                        player.playPlatformTracks(platformSongs, startAt: globalIdx)
+                                    } label: {
+                                        PlatformSongRow(
+                                            song: song,
+                                            isPlaying: player.currentTrack?.platform == song.platform
+                                                && player.currentTrack?.title == song.title
+                                                && player.isPlaying
+                                        )
+                                    }
+                                    .pressable()
+                                    .padding(.horizontal, 12)
+                                    // 付费音源换源：长按选平台（仅后端配置 Key 时显示）
+                                    .contextMenu {
+                                        if !enabledPaidPlatforms.isEmpty {
+                                            ForEach(enabledPaidPlatforms, id: \.self) { paid in
+                                                Button {
+                                                    player.playPlatformTracks(
+                                                        platformSongs,
+                                                        startAt: globalIdx,
+                                                        via: paid
+                                                    )
+                                                } label: {
+                                                    Label(
+                                                        "用\(PlatformTrack.displayName(for: paid))播放",
+                                                        systemImage: "arrow.triangle.2.circlepath"
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Divider()
+                                        .padding(.leading, 64)
                                 }
-                                .pressable()
-                                .padding(.horizontal, 12)
-                                Divider()
-                                    .padding(.leading, 64)
                             }
                         }
                         if isLoading {
@@ -123,6 +167,7 @@ struct DiscoverView: View {
         hasMore = true
         songs = []
         platformSongs = []
+        enabledPlatforms = []
         errorMessage = nil
         fetch()
     }
@@ -173,6 +218,7 @@ struct DiscoverView: View {
                         if p == 1 {
                             songs = result.local
                             platformSongs = result.platforms
+                            enabledPlatforms = result.enabledPlatforms
                         } else {
                             songs.append(contentsOf: result.local)
                             // 平台结果只取第一页（后端已按相关度截断）

@@ -49,12 +49,16 @@ class AudioPlayerManager: ObservableObject {
         playTracks(tracks, startAt: index)
     }
 
-    /// 播放平台歌曲（网易云/QQ/酷狗）：直链经后端 302，AVPlayer 原生跟随
+    /// 播放平台歌曲（网易云/QQ/酷狗/付费音源）：直链经后端 302，AVPlayer 原生跟随
+    /// - via: 换源到指定平台（如 wy 付费网易云）。nil 则用歌曲自带平台。
+    ///   注意：wy 与网易云同 ID 空间，可直接复用 platformId；kg/kw/mg/tx 需各自 ID，
+    ///   传网易云 ID 会 404，后端返回 nil 时该歌曲被跳过。
     @MainActor
-    func playPlatformTracks(_ songs: [PlatformTrack], startAt index: Int = 0) {
+    func playPlatformTracks(_ songs: [PlatformTrack], startAt index: Int = 0, via platform: String? = nil) {
         let tracks: [Track] = songs.compactMap { song in
+            let target = platform ?? song.platform
             guard let url = try? MusicService.shared.platformStreamURL(
-                platform: song.platform,
+                platform: target,
                 platformId: song.platformId
             ) else { return nil }
             return Track(
@@ -64,7 +68,7 @@ class AudioPlayerManager: ObservableObject {
                 duration: song.duration,
                 artworkURL: song.coverURL,
                 platformStreamURL: url,
-                platform: song.platform
+                platform: target
             )
         }
         guard !tracks.isEmpty else { return }

@@ -410,6 +410,8 @@ private struct SearchPageDTO: Decodable {
     let total: Int
     let page: Int
     let pageSize: Int
+    /// 后端启用的平台（含付费平台 kg/kw/mg/tx/wy，仅配置 Key 时出现）
+    let platformEnabled: [String]?
 
     func toSearchResult() -> SearchResult {
         var local: [OnlineSong] = []
@@ -423,7 +425,12 @@ private struct SearchPageDTO: Decodable {
             // iTunes 试听（source=itunes）暂不展示
         }
         let hasMore = list.count >= pageSize
-        return SearchResult(local: local, platforms: platforms, hasMore: hasMore)
+        return SearchResult(
+            local: local,
+            platforms: platforms,
+            hasMore: hasMore,
+            enabledPlatforms: platformEnabled ?? []
+        )
     }
 }
 

@@ -107,7 +107,7 @@ struct LocalSourceQuality: Equatable, Hashable {
 }
 
 struct PlatformSource: Equatable, Identifiable, Hashable {
-    /// netease | qq | kugou
+    /// netease | qq | kugou | kg | kw | mg | tx | wy
     let platform: String
     let platformId: String
     let title: String
@@ -120,15 +120,22 @@ struct PlatformSource: Equatable, Identifiable, Hashable {
         switch platform {
         case "netease": return "网易云"
         case "qq": return "QQ 音乐"
-        case "kugou": return "酷狗"
+        case "kugou", "kg": return "酷狗"
+        case "kw": return "酷我"
+        case "mg": return "咪咕"
+        case "tx": return "腾讯"
+        case "wy": return "网易"
         default: return platform
         }
     }
 }
 
-/// 平台歌曲（网易云/QQ/酷狗经后端聚合）：不可下载/收藏，仅在线播
+/// 平台歌曲（网易云/QQ/酷狗/付费音源经后端聚合）：不可下载/收藏，仅在线播
 struct PlatformTrack: Identifiable, Hashable {
-    /// netease | qq | kugou
+    /// 付费音源平台：kg=酷狗 kw=酷我 mg=咪咕 tx=腾讯 wy=网易（需后端配置 PAID_SOURCE_API_KEY）
+    static let paidPlatforms: Set<String> = ["kg", "kw", "mg", "tx", "wy"]
+
+    /// netease | qq | kugou | kg | kw | mg | tx | wy
     let platform: String
     let platformId: String
     let title: String
@@ -148,14 +155,22 @@ struct PlatformTrack: Identifiable, Hashable {
         hasher.combine(id)
     }
 
-    var platformDisplayName: String {
+    var isPaidPlatform: Bool { Self.paidPlatforms.contains(platform) }
+
+    static func displayName(for platform: String) -> String {
         switch platform {
         case "netease": return "网易云"
         case "qq": return "QQ音乐"
-        case "kugou": return "酷狗"
+        case "kugou", "kg": return "酷狗"
+        case "kw": return "酷我"
+        case "mg": return "咪咕"
+        case "tx": return "腾讯"
+        case "wy": return "网易"
         default: return platform
         }
     }
+
+    var platformDisplayName: String { Self.displayName(for: platform) }
 }
 
 /// 搜索结果：本地 + 平台分组
@@ -163,4 +178,11 @@ struct SearchResult {
     var local: [OnlineSong]
     var platforms: [PlatformTrack]
     var hasMore: Bool
+    /// 后端启用的平台（platformEnabled）：含付费平台，仅后端配置 Key 时出现
+    var enabledPlatforms: [String] = []
+
+    /// 已启用的付费平台（用于"换源"菜单）
+    var enabledPaidPlatforms: [String] {
+        enabledPlatforms.filter { PlatformTrack.paidPlatforms.contains($0) }
+    }
 }
