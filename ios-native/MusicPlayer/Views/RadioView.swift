@@ -1,0 +1,149 @@
+import SwiftUI
+
+/// 电台 Tab（Radio Browser 免费 API，3 万+ 电台，无需 key）。
+struct RadioStationItem: Identifiable, Hashable {
+    let id = UUID()
+    let name: String
+    let url: String
+    let favicon: URL?
+    let tags: [String]
+    let country: String?
+    let bitrate: Int
+}
+
+struct RadioView: View {
+    @EnvironmentObject private var player: AudioPlayerManager
+
+    @State private var stations: [RadioStationItem] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @State private var selectedTag = ""
+
+    private let tags = ["热门", "pop", "jazz", "classical", "rock", "electronic", "news", "chinese"]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // 标签横滑
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(tags, id: \.self) { tag in
+                            Button {
+                                selectedTag = tag == "热门" ? "" : tag
+                                load()
+                            } label: {
+                                Text(tag)
+                                    .font(.subheadline)
+                                    .fontWeight(selectedTag == (tag == "热门" ? "" : tag) ? .semibold : .regular)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(selectedTag == (tag == "热门" ? "" : tag)
+                                                  ? AppleTheme.accent.opacity(0.2)
+                                                  : AppleTheme.secondaryLabel.opacity(0.12))
+                                    )
+                                    .foregroundColor(selectedTag == (tag == "热门" ? "" : tag)
+                                                     ? AppleTheme.accent : AppleTheme.label)
+                            }
+                            .pressable()
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+
+                if isLoading && stations.isEmpty {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                } else if let errorMessage {
+                    VStack(spacing: 12) {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                            .font(.largeTitle)
+                            .foregroundColor(AppleTheme.secondaryLabel)
+                        Text(errorMessage)
+                            .foregroundColor(AppleTheme.secondaryLabel)
+                        Button("重试") { load() }.buttonStyle(.bordered)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+                } else {
+                    LazyVStack(spacing: 0) {
+                        ForEach(stations) { station in
+                            Button {
+                                play(station)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(AppleTheme.accent.opacity(0.15))
+                                            .frame(width: 48, height: 48)
+                                        Image(systemName: "radio")
+                                            .foregroundColor(AppleTheme.accent)
+                                    }
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(station.name)
+                                            .font(.body)
+                                            .foregroundColor(AppleTheme.label)
+                                            .lineLimit(1)
+                                        HStack(spacing: 6) {
+                                            if let country = station.country {
+                                                Text(country)
+                                            }
+                                            if station.bitrate > 0 {
+                                                Text("\(station.bitrate)kbps")
+                                            }
+                                        }
+                                        .font(.caption)
+                                        .foregroundColor(AppleTheme.secondaryLabel)
+                                    }
+                                    Spacer()
+                                    if player.currentTrack?.title == station.name && player.isPlaying {
+                                        EqualizerBars()
+                                    } else {
+                                        Image(systemName: "play.circle")
+                                            .font(.title2)
+                                            .foregroundColor(AppleTheme.secondaryLabel)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                            }
+                            .pressable()
+                            Divider().padding(.leading, 76)
+                        }
+                    }
+                }
+            }
+            .padding(.vertical, 12)
+        }
+        .navigationTitle("电台")
+        .task { load() }
+    }
+
+    private func load() {
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                stations = try await MusicService.shared.radioStations(
+                    tag: selectedTag.isEmpty ? nil : selectedTag
+                )
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isLoading = false
+        }
+    }
+
+    private func play(_ station: RadioStationItem) {
+        guard let url = URL(string: station.url) else { return }
+        let track = Track(
+            title: station.name,
+            artist: station.country ?? "网络电台",
+            album: "Radio",
+            fileURL: url
+        )
+        player.playURLDirect(url, track: track)
+    }
+}

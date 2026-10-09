@@ -87,6 +87,10 @@ export default () => ({
       timeoutMs: process.env.ITUNES_TIMEOUT_MS ?? '5000',
       maxResults: process.env.ITUNES_MAX_RESULTS ?? '5',
     },
+    radio: {
+      enabled: process.env.RADIO_ENABLED ?? 'true',
+      timeoutMs: process.env.RADIO_TIMEOUT_MS ?? '5000',
+    },
     // 国内音乐平台（via sidecar 容器）
     netease: {
       enabled: process.env.NETEASE_ENABLED ?? 'true',

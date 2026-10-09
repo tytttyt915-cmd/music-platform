@@ -53,6 +53,7 @@
 		CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E414A20A2F892A0A8251A03D /* DecryptedText.swift */; };
 		C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */ = {isa = PBXBuildFile; fileRef = D825FA5A785DD68987F78D60 /* ClickSpark.swift */; };
 		D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */; };
+		E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DD894334F7A35167264BE6 /* RadioView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -111,6 +112,7 @@
 		E414A20A2F892A0A8251A03D /* DecryptedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/DecryptedText.swift; sourceTree = "<group>"; };
 		D825FA5A785DD68987F78D60 /* ClickSpark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ClickSpark.swift; sourceTree = "<group>"; };
 		C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SourceSwitchView.swift; sourceTree = "<group>"; };
+		29DD894334F7A35167264BE6 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,6 +218,7 @@
 				E414A20A2F892A0A8251A03D /* DecryptedText.swift */,
 				D825FA5A785DD68987F78D60 /* ClickSpark.swift */,
 				C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */,
+				29DD894334F7A35167264BE6 /* RadioView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -355,6 +358,7 @@
 				CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */,
 				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */
 				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */
+				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

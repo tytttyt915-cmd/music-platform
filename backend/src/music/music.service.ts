@@ -25,6 +25,7 @@ import {
 } from '../external/musicbrainz.service';
 import { PlatformAggregatorService } from '../external/platforms/platform-aggregator.service';
 import { PlatformTrack } from '../external/platforms/platform.types';
+import { RadioService, RadioStation } from '../external/radio.service';
 
 export interface PageResult<T> {
   list: T[];
@@ -55,6 +56,7 @@ export class MusicService {
     private readonly itunes: ITunesService,
     private readonly musicbrainz: MusicBrainzService,
     private readonly platforms: PlatformAggregatorService,
+    private readonly radio: RadioService,
   ) {}
 
   // ---------------- 分页音乐流 ----------------
@@ -560,6 +562,19 @@ export class MusicService {
       }
     }
     return bestScore > 0 ? best : null;
+  }
+
+  // ---------------- 电台（Radio Browser） ----------------
+
+  /**
+   * 电台列表：tag 为空时返回热门电台。
+   */
+  async getRadioStations(tag?: string, limit = 30): Promise<RadioStation[]> {
+    const n = Math.min(Math.max(limit, 1), 100);
+    if (tag && tag.trim()) {
+      return this.radio.searchByTag(tag.trim(), n);
+    }
+    return this.radio.topStations(n);
   }
 
   // ---------------- 播放统计（防刷） ----------------

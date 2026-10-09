@@ -81,6 +81,16 @@ export class MusicController {
   }
 
   /**
+   * 电台：tag 为空返回热门电台。?tag=jazz&limit=30。
+   */
+  @Public()
+  @Get('radio')
+  radio(@Query('tag') tag?: string, @Query('limit') limit?: string) {
+    const n = limit ? parseInt(limit, 10) : 30;
+    return this.musicService.getRadioStations(tag, Number.isNaN(n) ? 30 : n);
+  }
+
+  /**
    * 流媒体入口：查多码率元数据 → 生成预签名 URL → 302 重定向。
    * 实际音频字节由对象存储（经 Nginx/CDN）直接下发，支持 Range 206。
    */

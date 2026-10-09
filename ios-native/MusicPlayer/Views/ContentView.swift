@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - ContentView（2026-10-09 Apple 原生风重做）
 //
 // 职责：App 主容器。
-//   - 4 Tab：发现 / 歌单 / 本地 / 我的（每 tab 独立 NavigationStack，保留 iOS 右滑返回）
+//   - 5 Tab：发现 / 电台 / 歌单 / 本地 / 我的（每 tab 独立 NavigationStack，保留 iOS 右滑返回）
 //   - 底部自定义 TabBar：Liquid Glass 背景（iOS 26 .glassEffect，低版本降级毛玻璃）
 //   - MiniPlayer 悬浮在 TabBar 上方：Liquid Glass 胶囊，点击/上滑展开 FullPlayer
 //   - FullPlayer 用 fullScreenCover + 下滑手势关闭（1:1 跟手，可打断）
@@ -17,6 +17,7 @@ struct ContentView: View {
 
     private let tabs: [(title: String, icon: String, selectedIcon: String)] = [
         ("发现", "safari", "safari.fill"),
+        ("电台", "radio", "radio.fill"),
         ("歌单", "music.note.list", "music.note.list"),
         ("本地", "folder", "folder.fill"),
         ("我的", "person", "person.fill"),
@@ -28,8 +29,9 @@ struct ContentView: View {
             Group {
                 switch selection {
                 case 0: NavigationStack { DiscoverView() }
-                case 1: NavigationStack { PlaylistPlazaView() }
-                case 2: NavigationStack { LocalMusicView() }
+                case 1: NavigationStack { RadioView() }
+                case 2: NavigationStack { PlaylistPlazaView() }
+                case 3: NavigationStack { LocalMusicView() }
                 default: NavigationStack { ProfileView() }
                 }
             }
