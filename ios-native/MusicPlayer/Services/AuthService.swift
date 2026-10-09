@@ -19,20 +19,26 @@ import Security
 
 // MARK: - Token 模型
 
-/// 后端登录/刷新的返回：{ accessToken, refreshToken, tokenType, expiresIn, isGuest }
+/// 后端登录/刷新的返回：{ accessToken, refreshToken, tokenType, expiresIn }
+/// 注意：后端不返回 isGuest，由调用方根据登录方式决定
 struct AuthTokens: Codable {
     let accessToken: String
     let refreshToken: String
     let tokenType: String
     /// 如 "3600s"
     let expiresIn: String
-    let isGuest: Bool
 
     /// expiresIn 解析成秒数，解析失败默认 3600
     var expiresInSeconds: TimeInterval {
         let digits = expiresIn.filter(\.isNumber)
         return TimeInterval(digits).map { $0 > 0 ? $0 : 3600 } ?? 3600
     }
+}
+
+/// Keychain 存储用：token + 是否游客
+private struct StoredTokens: Codable {
+    let tokens: AuthTokens
+    let isGuest: Bool
 }
 
 // MARK: - 线程安全的 token 盒子
@@ -60,8 +66,9 @@ enum TokenStore {
     private static let service = "com.musicplatform.auth"
     private static let account = "tokens"
 
-    static func save(_ tokens: AuthTokens) throws {
-        let data = try JSONEncoder().encode(tokens)
+    static func save(_ tokens: AuthTokens, isGuest: Bool) throws {
+        let stored = StoredTokens(tokens: tokens, isGuest: isGuest)
+        let data = try JSONEncoder().encode(stored)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -79,7 +86,7 @@ enum TokenStore {
         }
     }
 
-    static func load() -> AuthTokens? {
+    static func load() -> StoredTokens? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -130,11 +137,11 @@ final class AuthService: ObservableObject {
         }
 
         // 恢复上次登录态
-        if let tokens = TokenStore.load() {
-            let expiry = Date().addingTimeInterval(tokens.expiresInSeconds)
-            box.write(tokens: tokens, expiry: expiry)
+        if let stored = TokenStore.load() {
+            let expiry = Date().addingTimeInterval(stored.tokens.expiresInSeconds)
+            box.write(tokens: stored.tokens, expiry: expiry)
             self.isLoggedIn = true
-            self.isGuest = tokens.isGuest
+            self.isGuest = stored.isGuest
         }
     }
 
@@ -143,7 +150,7 @@ final class AuthService: ObservableObject {
     /// 游客登录（纯净试听模式，Apple 审核要求保留）
     func guestLogin() async throws {
         let tokens: AuthTokens = try await api.post("/auth/guest")
-        try persist(tokens)
+        try persist(tokens, isGuest: true)
     }
 
     /// 发送短信验证码
@@ -161,7 +168,7 @@ final class AuthService: ObservableObject {
         }
         struct Body: Encodable { let phone: String; let code: String }
         let tokens: AuthTokens = try await api.post("/auth/sms/verify", body: Body(phone: phone, code: code))
-        try persist(tokens)
+        try persist(tokens, isGuest: false)
     }
 
     /// 微信登录（小程序 code 换 token；iOS 端 code 获取逻辑在 Views 阶段接入）
@@ -171,7 +178,7 @@ final class AuthService: ObservableObject {
         }
         struct Body: Encodable { let code: String }
         let tokens: AuthTokens = try await api.post("/auth/wechat/login", body: Body(code: code))
-        try persist(tokens)
+        try persist(tokens, isGuest: false)
     }
 
     /// 登出：先调服务端吊销 refreshToken（失败也不阻塞本地清理）
@@ -200,7 +207,7 @@ final class AuthService: ObservableObject {
         struct Body: Encodable { let refreshToken: String }
         do {
             let tokens: AuthTokens = try await api.post("/auth/refresh", body: Body(refreshToken: refreshToken))
-            try persist(tokens)
+            try persist(tokens, isGuest: self.isGuest)
             return true
         } catch {
             clearLocal()
@@ -210,12 +217,12 @@ final class AuthService: ObservableObject {
 
     // MARK: - 私有
 
-    private func persist(_ tokens: AuthTokens) throws {
-        try TokenStore.save(tokens)
+    private func persist(_ tokens: AuthTokens, isGuest: Bool) throws {
+        try TokenStore.save(tokens, isGuest: isGuest)
         let expiry = Date().addingTimeInterval(tokens.expiresInSeconds)
         box.write(tokens: tokens, expiry: expiry)
         isLoggedIn = true
-        isGuest = tokens.isGuest
+        self.isGuest = isGuest
     }
 
     private func clearLocal() {
