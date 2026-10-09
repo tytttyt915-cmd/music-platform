@@ -63,17 +63,33 @@ struct AudioReactiveBackground: View {
         let schedule = AnimationTimelineSchedule.animation(minimumInterval: interval)
         return TimelineView(schedule) { context in
             let now = context.date.timeIntervalSinceReferenceDate
-            return Rectangle()
+            WaveShaderView(
+                time: now,
+                amplitude: simulatedAmplitude(isPlaying: player.isPlaying, time: now),
+                tintColor: accentRGB
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    /// 独立 View：把 Shader 表达式隔离出来，类型错误可精确定位。
+    @available(iOS 17, *)
+    private struct WaveShaderView: View {
+        let time: Double
+        let amplitude: Float
+        let tintColor: SIMD3<Float>
+
+        var body: some View {
+            Rectangle()
                 .colorEffect(
                     ShaderLibrary.waveBackground(
-                        .float(Float(now)),
-                        .float(simulatedAmplitude(isPlaying: player.isPlaying, time: now)),
-                        .float3(accentRGB),
+                        .float(Float(time)),
+                        .float(amplitude),
+                        .float3(tintColor),
                         .boundingRect
                     )
                 )
         }
-        .ignoresSafeArea()
     }
 
     // MARK: - 静态降级（iOS 16 / 低电量 / 减少动态效果）
