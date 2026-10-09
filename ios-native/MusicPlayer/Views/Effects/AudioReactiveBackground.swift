@@ -85,7 +85,7 @@ struct AudioReactiveBackground: View {
                     ShaderLibrary.waveBackground(
                         .float(Float(time)),
                         .float(amplitude),
-                        .float3(tintColor),
+                        .float3(tintColor.x, tintColor.y, tintColor.z),
                         .boundingRect
                     )
                 )
