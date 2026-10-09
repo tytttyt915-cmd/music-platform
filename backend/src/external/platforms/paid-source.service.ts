@@ -193,27 +193,41 @@ abstract class PaidSourceBase implements IPlatformService {
 }
 
 @Injectable()
-@Injectable()
 export class KgPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'kg';
+  constructor(config: ConfigService) {
+    super(config);
+  }
 }
 
 @Injectable()
 export class KwPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'kw';
+  constructor(config: ConfigService) {
+    super(config);
+  }
 }
 
 @Injectable()
 export class MgPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'mg';
+  constructor(config: ConfigService) {
+    super(config);
+  }
 }
 
 @Injectable()
 export class TxPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'tx';
+  constructor(config: ConfigService) {
+    super(config);
+  }
 }
 
 @Injectable()
 export class WyPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'wy';
+  constructor(config: ConfigService) {
+    super(config);
+  }
 }
