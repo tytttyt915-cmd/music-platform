@@ -11,7 +11,7 @@
 					<key>kind</key>
 					<string>software-package</string>
 					<key>url</key>
-					<string>https://github.com/tytttyt915-cmd/music-platform/releases/download/v3.0/MusicApp-v3.0-native.ipa</string>
+					<string>https://github.com/tytttyt915-cmd/music-platform/releases/download/v4.0/MusicApp-v4.0-native.ipa</string>
 				</dict>
 			</array>
 			<key>metadata</key>
@@ -19,7 +19,7 @@
 				<key>bundle-identifier</key>
 				<string>app.tamarind5153.aries1536</string>
 				<key>bundle-version</key>
-				<string>3.0</string>
+				<string>4.0</string>
 				<key>kind</key>
 				<string>software</string>
 				<key>title</key>
