@@ -49,6 +49,9 @@
 		DD1BEB19F948C2E72EE040EA /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */; };
 		7BE241CEEDB40A4B3D73C729 /* SleepTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */; };
 		552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */; };
+		58EDA2947AB6CC53355A44E7 /* TextType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 974404C02DF3BC3E41B4CD29 /* TextType.swift */; };
+		CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E414A20A2F892A0A8251A03D /* DecryptedText.swift */; };
+		C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */ = {isa = PBXBuildFile; fileRef = D825FA5A785DD68987F78D60 /* ClickSpark.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -103,6 +106,9 @@
 		2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
 		4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SleepTimerView.swift; sourceTree = "<group>"; };
 		A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/CoverColorExtractor.swift; sourceTree = "<group>"; };
+		974404C02DF3BC3E41B4CD29 /* TextType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/TextType.swift; sourceTree = "<group>"; };
+		E414A20A2F892A0A8251A03D /* DecryptedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/DecryptedText.swift; sourceTree = "<group>"; };
+		D825FA5A785DD68987F78D60 /* ClickSpark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ClickSpark.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -204,6 +210,9 @@
 				8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */,
 				4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */,
 				A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */,
+				974404C02DF3BC3E41B4CD29 /* TextType.swift */,
+				E414A20A2F892A0A8251A03D /* DecryptedText.swift */,
+				D825FA5A785DD68987F78D60 /* ClickSpark.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -339,6 +348,9 @@
 				DD1BEB19F948C2E72EE040EA /* SpectrumAnalyzer.swift in Sources */,
 				7BE241CEEDB40A4B3D73C729 /* SleepTimerView.swift in Sources */,
 				552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */
+				58EDA2947AB6CC53355A44E7 /* TextType.swift in Sources */,
+				CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */,
+				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

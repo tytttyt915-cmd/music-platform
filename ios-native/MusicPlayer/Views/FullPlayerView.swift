@@ -215,6 +215,7 @@ struct FullPlayerView: View {
                     .contentShape(Rectangle())
             }
             .pressable()
+            .clickSpark(color: pageAccent.opacity(0.9))
             Spacer()
             Button { player.next() } label: {
                 Image(systemName: "forward.fill")

@@ -19,7 +19,9 @@ struct LyricsView: View {
     var body: some View {
         Group {
             if isLoading {
-                ProgressView()
+                DecryptedText(target: "正在解码歌词…", duration: 0.9)
+                    .font(.subheadline)
+                    .foregroundColor(AppleTheme.secondaryLabel)
             } else if lines.isEmpty {
                 Text("暂无歌词")
                     .font(.subheadline)
