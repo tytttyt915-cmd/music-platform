@@ -352,17 +352,17 @@
 				361451531ECB194F9DE4099F /* SpotlightCard.swift in Sources */,
 				82EC5FACF1F5FA213FC33994 /* CountUp.swift in Sources */,
 				B4620A5EA04084E064847C5F /* WaveBackground.metal in Sources */,
-				FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */
+				FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */,
 				B98D05CA66A6B3E4B00E5A82 /* SleepTimerManager.swift in Sources */,
 				DD1BEB19F948C2E72EE040EA /* SpectrumAnalyzer.swift in Sources */,
 				7BE241CEEDB40A4B3D73C729 /* SleepTimerView.swift in Sources */,
-				552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */
+				552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */,
 				58EDA2947AB6CC53355A44E7 /* TextType.swift in Sources */,
 				CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */,
-				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */
-				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */
-				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */
-				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */
+				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */,
+				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */,
+				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */,
+				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
