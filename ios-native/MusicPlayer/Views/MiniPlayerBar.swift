@@ -34,6 +34,10 @@ struct MiniPlayerBar: View {
                     }
                 }
                 Spacer()
+                if player.isPlaying {
+                    EqualizerBars(isPlaying: true, color: theme.accentColor)
+                        .padding(.trailing, 2)
+                }
                 Button {
                     player.togglePlayPause()
                 } label: {

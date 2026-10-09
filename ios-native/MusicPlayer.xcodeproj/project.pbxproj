@@ -38,6 +38,9 @@
 		C8FB413BC2BA4CEC85C5E0A5 /* AudioPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D2B92AD7974B17AD204B01 /* AudioPlayerManager.swift */; };
 		1075AEB1AA794FC8BAF0E465 /* LibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124DF637039041B6806790BE /* LibraryStore.swift */; };
 		75DD18A12CB0D991D55F683D /* AppleTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 195DF2C218F6095F841EB490 /* AppleTheme.swift */; };
+		EAF1A58B477D8B01387DC644 /* EqualizerBars.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83618B49B18562E7108BCF7 /* EqualizerBars.swift */; };
+		7E8730DE78C98BE44AAF4088 /* BlurText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */; };
+		16BCF2C5DD92EB719D732C02 /* ShinyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -81,6 +84,9 @@
 		C5D2B92AD7974B17AD204B01 /* AudioPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerManager.swift; sourceTree = "<group>"; };
 		124DF637039041B6806790BE /* LibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryStore.swift; sourceTree = "<group>"; };
 		195DF2C218F6095F841EB490 /* AppleTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTheme.swift; sourceTree = "<group>"; };
+		F83618B49B18562E7108BCF7 /* EqualizerBars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/EqualizerBars.swift; sourceTree = "<group>"; };
+		DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/BlurText.swift; sourceTree = "<group>"; };
+		5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ShinyText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +177,9 @@
 				F901E5C98B3E485DB0665238 /* PlayerBar.swift */,
 				DB2294497AF14B4B83EAD057 /* LyricsView.swift */,
 				195DF2C218F6095F841EB490 /* AppleTheme.swift */
+				F83618B49B18562E7108BCF7 /* EqualizerBars.swift */,
+				DBFA8E55C0B1BF11AB29A0B8 /* BlurText.swift */,
+				5CDD5667C49B29FA2FDC9825 /* ShinyText.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -286,7 +295,10 @@
 				25DAF0ABFF2F408DACA7DB8C /* UserProfile.swift in Sources */,
 				C8FB413BC2BA4CEC85C5E0A5 /* AudioPlayerManager.swift in Sources */,
 				1075AEB1AA794FC8BAF0E465 /* LibraryStore.swift in Sources */,
-				75DD18A12CB0D991D55F683D /* AppleTheme.swift in Sources */
+				75DD18A12CB0D991D55F683D /* AppleTheme.swift in Sources */,
+				EAF1A58B477D8B01387DC644 /* EqualizerBars.swift in Sources */,
+				7E8730DE78C98BE44AAF4088 /* BlurText.swift in Sources */,
+				16BCF2C5DD92EB719D732C02 /* ShinyText.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

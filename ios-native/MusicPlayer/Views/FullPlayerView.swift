@@ -48,7 +48,7 @@ struct FullPlayerView: View {
                 // 歌曲信息
                 if let track = player.currentTrack {
                     VStack(spacing: 6) {
-                        Text(track.title)
+                        BlurText(text: track.title)
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(AppleTheme.label)

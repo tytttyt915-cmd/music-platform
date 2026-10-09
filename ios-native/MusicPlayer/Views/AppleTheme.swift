@@ -119,9 +119,7 @@ struct SongRow: View {
             }
             Spacer()
             if isPlaying {
-                Image(systemName: "waveform")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(theme.accentColor)
+                EqualizerBars(isPlaying: true, color: theme.accentColor)
             } else {
                 Image(systemName: "play.fill")
                     .font(.system(size: 14, weight: .semibold))
