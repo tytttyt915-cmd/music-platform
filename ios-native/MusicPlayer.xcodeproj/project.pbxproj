@@ -169,7 +169,7 @@
 				CAB703FA10D04E8DB2B9B28D /* OnlineSearchView.swift */,
 				859F7059145547FDAF85F40A /* ArtworkView.swift */,
 				F901E5C98B3E485DB0665238 /* PlayerBar.swift */,
-				DB2294497AF14B4B83EAD057 /* LyricsView.swift */,,
+				DB2294497AF14B4B83EAD057 /* LyricsView.swift */,
 				195DF2C218F6095F841EB490 /* AppleTheme.swift */
 			);
 			path = Views;
@@ -285,7 +285,7 @@
 				24952317E71242F1ABA7E71F /* ThemeSettings.swift in Sources */,
 				25DAF0ABFF2F408DACA7DB8C /* UserProfile.swift in Sources */,
 				C8FB413BC2BA4CEC85C5E0A5 /* AudioPlayerManager.swift in Sources */,
-				1075AEB1AA794FC8BAF0E465 /* LibraryStore.swift in Sources */,,
+				1075AEB1AA794FC8BAF0E465 /* LibraryStore.swift in Sources */,
 				75DD18A12CB0D991D55F683D /* AppleTheme.swift in Sources */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
