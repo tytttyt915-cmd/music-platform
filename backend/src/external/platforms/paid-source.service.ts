@@ -193,6 +193,7 @@ abstract class PaidSourceBase implements IPlatformService {
 }
 
 @Injectable()
+@Injectable()
 export class KgPaidSourceService extends PaidSourceBase {
   readonly platform: PaidSourcePlatform = 'kg';
 }
