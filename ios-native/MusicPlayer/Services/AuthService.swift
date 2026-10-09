@@ -36,7 +36,7 @@ struct AuthTokens: Codable {
 }
 
 /// Keychain 存储用：token + 是否游客
-private struct StoredTokens: Codable {
+struct StoredTokens: Codable {
     let tokens: AuthTokens
     let isGuest: Bool
 }
@@ -99,7 +99,14 @@ enum TokenStore {
               let data = result as? Data else {
             return nil
         }
-        return try? JSONDecoder().decode(AuthTokens.self, from: data)
+        // 先按新格式解，失败则兼容老版本（裸 AuthTokens，无 isGuest）
+        if let stored = try? JSONDecoder().decode(StoredTokens.self, from: data) {
+            return stored
+        }
+        if let tokens = try? JSONDecoder().decode(AuthTokens.self, from: data) {
+            return StoredTokens(tokens: tokens, isGuest: false)
+        }
+        return nil
     }
 
     static func delete() {
