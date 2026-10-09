@@ -161,7 +161,7 @@ private struct RadioStationRow: View {
                 }
                 Spacer()
                 if isPlaying {
-                    EqualizerBars()
+                    EqualizerBars(isPlaying: true)
                 } else {
                     Image(systemName: "play.circle")
                         .font(.title2)
