@@ -23,6 +23,8 @@ import {
   MusicBrainzRelease,
   MusicBrainzService,
 } from '../external/musicbrainz.service';
+import { PlatformAggregatorService } from '../external/platforms/platform-aggregator.service';
+import { PlatformTrack } from '../external/platforms/platform.types';
 
 export interface PageResult<T> {
   list: T[];
@@ -52,6 +54,7 @@ export class MusicService {
     private readonly lyricsOvh: LyricsOvhService,
     private readonly itunes: ITunesService,
     private readonly musicbrainz: MusicBrainzService,
+    private readonly platforms: PlatformAggregatorService,
   ) {}
 
   // ---------------- 分页音乐流 ----------------
@@ -192,15 +195,56 @@ export class MusicService {
         );
       }
     }
-    const merged: Array<Track | ITunesTrack> = [...list, ...external];
+
+    // 国内平台聚合搜索（网易云/QQ/酷狗）：可播，标记 platform
+    let platformTracks: PlatformTrack[] = [];
+    if (q) {
+      try {
+        platformTracks = await this.platforms.searchAll(q, 10);
+      } catch (err) {
+        this.logger.warn(
+          `平台聚合搜索异常: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    const merged: Array<Track | ITunesTrack | PlatformTrack> = [
+      ...list,
+      ...platformTracks,
+      ...external,
+    ];
     return {
       list: merged,
-      total: total + external.length,
+      total: total + platformTracks.length + external.length,
       localTotal: total,
+      platformTotal: platformTracks.length,
+      platformEnabled: this.platforms.enabledPlatforms,
       externalTotal: external.length,
       page,
       pageSize,
     };
+  }
+
+  /**
+   * 获取国内平台歌曲的播放直链（302 重定向用）。
+   * 前端传 platform + platformId，后端代理获取真实直链。
+   */
+  async getPlatformPlayUrl(
+    platform: 'netease' | 'qq' | 'kugou',
+    platformId: string,
+    quality: 'standard' | 'high' | 'lossless' = 'high',
+  ): Promise<string | null> {
+    return this.platforms.getPlayUrl(platform, platformId, quality);
+  }
+
+  /**
+   * 获取国内平台歌曲的歌词。
+   */
+  async getPlatformLyric(
+    platform: 'netease' | 'qq' | 'kugou',
+    platformId: string,
+  ): Promise<string | null> {
+    return this.platforms.getLyric(platform, platformId);
   }
 
   // ---------------- 歌曲详情 / 歌词 ----------------

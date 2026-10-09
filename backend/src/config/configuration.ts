@@ -87,5 +87,26 @@ export default () => ({
       timeoutMs: process.env.ITUNES_TIMEOUT_MS ?? '5000',
       maxResults: process.env.ITUNES_MAX_RESULTS ?? '5',
     },
+    // 国内音乐平台（via sidecar 容器）
+    netease: {
+      enabled: process.env.NETEASE_ENABLED ?? 'true',
+      baseUrl: process.env.NETEASE_API_URL ?? 'http://ncm-api:3000',
+      realIp: process.env.NETEASE_REAL_IP ?? '116.25.146.177',
+      timeoutMs: process.env.NETEASE_TIMEOUT_MS ?? '8000',
+      maxResults: process.env.NETEASE_MAX_RESULTS ?? '10',
+    },
+    // Phase 2 预留
+    qqmusic: {
+      enabled: process.env.QQMUSIC_ENABLED ?? 'false',
+      baseUrl: process.env.QQMUSIC_API_URL ?? 'http://qqmusic-api:3002',
+      timeoutMs: process.env.QQMUSIC_TIMEOUT_MS ?? '8000',
+      maxResults: process.env.QQMUSIC_MAX_RESULTS ?? '10',
+    },
+    kugou: {
+      enabled: process.env.KUGOU_ENABLED ?? 'false',
+      baseUrl: process.env.KUGOU_API_URL ?? 'http://kugou-api:3003',
+      timeoutMs: process.env.KUGOU_TIMEOUT_MS ?? '8000',
+      maxResults: process.env.KUGOU_MAX_RESULTS ?? '10',
+    },
   },
 });

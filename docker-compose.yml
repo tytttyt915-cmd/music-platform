@@ -61,6 +61,32 @@ services:
     expose:
       - "3000"
 
+  # 网易云音乐 API（sidecar）：搜索/播放链接/歌词
+  # 镜像：moefurina/ncm-api:latest（NeteaseCloudMusicApi Enhanced）
+  # 内网访问：http://ncm-api:3001
+  ncm-api:
+    image: moefurina/ncm-api:latest
+    container_name: music-ncm-api
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      # 解灰：灰色歌曲自动尝试解锁（推荐开启）
+      ENABLE_GENERAL_UNBLOCK: "true"
+      # 无损音质
+      ENABLE_FLAC: "true"
+      # 随机中国 IP（云服务器防 460）
+      # ENABLE_RANDOM_CN_IP: "true"
+      TZ: Asia/Shanghai
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
   nginx:
     image: nginx:1.27-alpine
     container_name: music-nginx

@@ -73,6 +73,60 @@ export class MusicController {
     res.redirect(302, url);
   }
 
+  /**
+   * 国内平台歌曲播放：302 重定向到平台真实直链。
+   * 前端从搜索结果取 platform + platformId 调用。
+   * 不代理流量，省服务器带宽。
+   */
+  @Public()
+  @Get('platform/:platform/stream')
+  async platformStream(
+    @Param('platform') platform: string,
+    @Query('id') platformId: string,
+    @Query('quality') quality: string,
+    @Res() res: Response,
+  ) {
+    if (!['netease', 'qq', 'kugou'].includes(platform)) {
+      res.status(400).json({ code: 400, message: '不支持的平台' });
+      return;
+    }
+    if (!platformId) {
+      res.status(400).json({ code: 400, message: '缺少歌曲 ID' });
+      return;
+    }
+    const q =
+      quality === 'lossless' || quality === 'standard' ? quality : 'high';
+    const url = await this.musicService.getPlatformPlayUrl(
+      platform as 'netease' | 'qq' | 'kugou',
+      platformId,
+      q as 'standard' | 'high' | 'lossless',
+    );
+    if (!url) {
+      res.status(404).json({ code: 404, message: '无可用播放链接（可能需 VIP）' });
+      return;
+    }
+    res.redirect(302, url);
+  }
+
+  /**
+   * 国内平台歌曲歌词。
+   */
+  @Public()
+  @Get('platform/:platform/lyrics')
+  async platformLyrics(
+    @Param('platform') platform: string,
+    @Query('id') platformId: string,
+  ) {
+    if (!['netease', 'qq', 'kugou'].includes(platform) || !platformId) {
+      return { code: 400, message: '参数错误' };
+    }
+    const lyric = await this.musicService.getPlatformLyric(
+      platform as 'netease' | 'qq' | 'kugou',
+      platformId,
+    );
+    return { code: 0, message: 'ok', data: { lyric, platform } };
+  }
+
   /** 播放统计（防刷）：登录用户自然日去重计数；游客仅记录事件 */
   @Post('track/:id/play')
   @HttpCode(200)
