@@ -125,3 +125,42 @@ struct PlatformSource: Equatable, Identifiable, Hashable {
         }
     }
 }
+
+/// 平台歌曲（网易云/QQ/酷狗经后端聚合）：不可下载/收藏，仅在线播
+struct PlatformTrack: Identifiable, Hashable {
+    /// netease | qq | kugou
+    let platform: String
+    let platformId: String
+    let title: String
+    let artist: String
+    let album: String
+    let coverURL: URL?
+    /// 时长（秒）
+    let duration: Double
+
+    var id: String { "\(platform):\(platformId)" }
+
+    static func == (lhs: PlatformTrack, rhs: PlatformTrack) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    var platformDisplayName: String {
+        switch platform {
+        case "netease": return "网易云"
+        case "qq": return "QQ音乐"
+        case "kugou": return "酷狗"
+        default: return platform
+        }
+    }
+}
+
+/// 搜索结果：本地 + 平台分组
+struct SearchResult {
+    var local: [OnlineSong]
+    var platforms: [PlatformTrack]
+    var hasMore: Bool
+}

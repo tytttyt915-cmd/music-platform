@@ -45,6 +45,36 @@ final class MusicService: ObservableObject {
         return dto.toPagedResult()
     }
 
+    /// 搜索歌曲（本地 + 平台分组）。后端把三类结果合并在一个 list 里，
+    /// 靠 platform / source 字段区分：有 platform=平台歌，有 source=itunes试听，
+    /// 都没有=本地曲库。
+    func searchWithPlatforms(keyword: String, page: Int = 1, pageSize: Int = 30) async throws -> SearchResult {
+        let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw APIError.business(code: -1, message: "搜索关键词不能为空")
+        }
+        let dto: SearchPageDTO = try await api.get(
+            "/music/search",
+            query: ["q": trimmed, "page": "\(page)", "pageSize": "\(pageSize)"]
+        )
+        return dto.toSearchResult()
+    }
+
+    /// 平台歌曲播放地址：后端 302 到真实直链，AVPlayer 原生跟随
+    func platformStreamURL(platform: String, platformId: String, quality: StreamQuality = .high) throws -> URL {
+        var components = URLComponents(
+            string: APIConfig.platformBase + "/music/platform/\(platform)/stream"
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "id", value: platformId),
+            URLQueryItem(name: "quality", value: quality.rawValue),
+        ]
+        guard let url = components?.url else {
+            throw APIError.badURL("/music/platform/\(platform)/stream")
+        }
+        return url
+    }
+
     /// 发现页推荐（自有曲库歌曲列表）
     func feed(page: Int = 1, pageSize: Int = 20) async throws -> PagedResult<OnlineSong> {
         let dto: TrackPageDTO = try await api.get(
@@ -370,6 +400,84 @@ private struct RadioStationDTO: Decodable {
             tags: tags ?? [],
             country: country,
             bitrate: bitrate ?? 0
+        )
+    }
+}
+
+/// 搜索响应：list 里混了三类（本地/平台/iTunes），靠字段区分
+private struct SearchPageDTO: Decodable {
+    let list: [SearchItemDTO]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+
+    func toSearchResult() -> SearchResult {
+        var local: [OnlineSong] = []
+        var platforms: [PlatformTrack] = []
+        for item in list {
+            if let p = item.toPlatformTrack() {
+                platforms.append(p)
+            } else if let s = item.toOnlineSong() {
+                local.append(s)
+            }
+            // iTunes 试听（source=itunes）暂不展示
+        }
+        let hasMore = list.count >= pageSize
+        return SearchResult(local: local, platforms: platforms, hasMore: hasMore)
+    }
+}
+
+private struct SearchItemDTO: Decodable {
+    // 本地
+    let id: String?
+    let playCount: String?
+    // 平台
+    let platform: String?
+    let platformId: String?
+    let external: Bool?
+    // iTunes
+    let source: String?
+    let previewUrl: String?
+    // 通用
+    let title: String?
+    let artist: String?
+    let album: String?
+    let coverUrl: String?
+    let durationMs: Int?
+
+    /// 平台歌：有 platform 字段
+    func toPlatformTrack() -> PlatformTrack? {
+        guard let platform = platform, let platformId = platformId,
+              let title = title, !title.isEmpty else { return nil }
+        return PlatformTrack(
+            platform: platform,
+            platformId: platformId,
+            title: title,
+            artist: artist ?? "未知歌手",
+            album: album ?? "",
+            coverURL: coverUrl.flatMap(URL.init(string:)),
+            duration: Double(durationMs ?? 0) / 1000.0
+        )
+    }
+
+    /// 本地歌：有 UUID id 且无 platform/source 标记
+    func toOnlineSong() -> OnlineSong? {
+        guard let id = id, !id.isEmpty,
+              platform == nil, source == nil,
+              let title = title, !title.isEmpty else { return nil }
+        let playCountInt = playCount.flatMap(Int.init) ?? 0
+        let artistName: String = {
+            guard let a = artist, !a.isEmpty else { return "未知歌手" }
+            return a
+        }()
+        return OnlineSong(
+            id: id,
+            title: title,
+            artist: artistName,
+            album: album ?? "",
+            coverURL: coverUrl.flatMap(URL.init(string:)),
+            duration: Double(durationMs ?? 0) / 1000.0,
+            playCount: playCountInt
         )
     }
 }

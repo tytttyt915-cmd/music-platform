@@ -11,6 +11,10 @@ struct Track: Identifiable, Codable, Equatable {
     var fileURL: URL?
     var artworkURL: URL?
     var onlineSongId: String?
+    /// 平台直链（网易云/QQ/酷狗经后端 302）：有值时直接播，不走 onlineSongId 解析
+    var platformStreamURL: URL?
+    /// 平台名（netease/qq/kugou），用于展示角标
+    var platform: String?
 
     init(id: String = UUID().uuidString,
          title: String,
@@ -19,7 +23,9 @@ struct Track: Identifiable, Codable, Equatable {
          duration: Double = 0,
          fileURL: URL? = nil,
          artworkURL: URL? = nil,
-         onlineSongId: String? = nil) {
+         onlineSongId: String? = nil,
+         platformStreamURL: URL? = nil,
+         platform: String? = nil) {
         self.id = id
         self.title = title
         self.artist = artist
@@ -28,6 +34,8 @@ struct Track: Identifiable, Codable, Equatable {
         self.fileURL = fileURL
         self.artworkURL = artworkURL
         self.onlineSongId = onlineSongId
+        self.platformStreamURL = platformStreamURL
+        self.platform = platform
     }
     
     static func == (lhs: Track, rhs: Track) -> Bool {

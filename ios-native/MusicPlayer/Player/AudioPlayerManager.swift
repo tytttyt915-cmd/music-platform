@@ -48,6 +48,27 @@ class AudioPlayerManager: ObservableObject {
         }
         playTracks(tracks, startAt: index)
     }
+
+    /// 播放平台歌曲（网易云/QQ/酷狗）：直链经后端 302，AVPlayer 原生跟随
+    func playPlatformTracks(_ songs: [PlatformTrack], startAt index: Int = 0) {
+        let tracks: [Track] = songs.compactMap { song in
+            guard let url = try? MusicService.shared.platformStreamURL(
+                platform: song.platform,
+                platformId: song.platformId
+            ) else { return nil }
+            return Track(
+                title: song.title,
+                artist: song.artist,
+                album: song.album,
+                duration: song.duration,
+                artworkURL: song.coverURL,
+                platformStreamURL: url,
+                platform: song.platform
+            )
+        }
+        guard !tracks.isEmpty else { return }
+        playTracks(tracks, startAt: min(index, tracks.count - 1))
+    }
     
     func togglePlayPause() {
         guard let player = player else { return }
@@ -82,9 +103,12 @@ class AudioPlayerManager: ObservableObject {
     
     private func playCurrent() {
         guard let track = currentTrack else { return }
-        
-        // 如果有在线ID，通过API获取播放地址
-        if let songId = track.onlineSongId {
+
+        // 平台直链优先：后端 302 到真实地址，AVPlayer 直接播
+        if let platformURL = track.platformStreamURL {
+            playURL(platformURL, track: track)
+        } else if let songId = track.onlineSongId {
+            // 如果有在线ID，通过API获取播放地址
             Task {
                 await playOnline(songId: songId, track: track)
             }

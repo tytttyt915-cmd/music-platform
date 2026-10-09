@@ -14,15 +14,32 @@ import {
 import { AddTrackDto } from './dto/add-track.dto';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { PlaylistService } from './playlist.service';
+import { PlaylistImportService } from './playlist-import.service';
 
 @Controller('playlists')
 export class PlaylistController {
-  constructor(private readonly playlistService: PlaylistService) {}
+  constructor(
+    private readonly playlistService: PlaylistService,
+    private readonly importService: PlaylistImportService,
+  ) {}
 
   @Post()
   @HttpCode(201)
   create(@CurrentUser() user: AuthUser, @Body() dto: CreatePlaylistDto) {
     return this.playlistService.create(user.id, dto);
+  }
+
+  /**
+   * 歌单导入：粘贴网易云/QQ 音乐歌单链接，一键搬家。
+   * 杀手级拉新功能，竞品没有跨平台搬家。
+   */
+  @Post('import')
+  @HttpCode(201)
+  importFromUrl(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { url?: string },
+  ) {
+    return this.importService.importFromUrl(user.id, body?.url ?? '');
   }
 
   @Get(':id')

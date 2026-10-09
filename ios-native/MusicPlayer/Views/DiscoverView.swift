@@ -14,6 +14,7 @@ struct DiscoverView: View {
 
     @State private var keyword = ""
     @State private var songs: [OnlineSong] = []
+    @State private var platformSongs: [PlatformTrack] = []
     @State private var page = 1
     @State private var hasMore = true
     @State private var isLoading = false
@@ -28,38 +29,64 @@ struct DiscoverView: View {
 
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    if isLoading && songs.isEmpty {
+                    if isLoading && songs.isEmpty && platformSongs.isEmpty {
                         LoadingStateView()
-                    } else if songs.isEmpty {
+                    } else if songs.isEmpty && platformSongs.isEmpty {
                         EmptyStateView(
                             icon: isSearchMode ? "magnifyingglass" : "music.note",
                             title: isSearchMode ? "没有找到相关歌曲" : "暂无推荐",
                             subtitle: isSearchMode ? "换个关键词试试" : "下拉刷新试试"
                         )
                     } else {
-                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            Button {
-                                player.playOnlineSongs(songs, startAt: idx)
-                            } label: {
-                                SongRow(
-                                    song: song,
-                                    isPlaying: player.currentTrack?.onlineSongId == song.id && player.isPlaying
-                                )
+                        // 本地结果
+                        if !songs.isEmpty {
+                            if isSearchMode {
+                                sectionHeader("本地曲库", count: songs.count)
                             }
-                            .pressable()
-                            .contextMenu {
+                            ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
                                 Button {
-                                    sourceSwitchSong = song
+                                    player.playOnlineSongs(songs, startAt: idx)
                                 } label: {
-                                    Label("换源", systemImage: "arrow.triangle.2.circlepath")
+                                    SongRow(
+                                        song: song,
+                                        isPlaying: player.currentTrack?.onlineSongId == song.id && player.isPlaying
+                                    )
                                 }
+                                .pressable()
+                                .contextMenu {
+                                    Button {
+                                        sourceSwitchSong = song
+                                    } label: {
+                                        Label("换源", systemImage: "arrow.triangle.2.circlepath")
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .onAppear {
+                                    if idx == songs.count - 1 { loadMore() }
+                                }
+                                Divider()
+                                    .padding(.leading, 64)
                             }
-                            .padding(.horizontal, 12)
-                            .onAppear {
-                                if idx == songs.count - 1 { loadMore() }
+                        }
+                        // 平台结果（网易云/QQ/酷狗）：仅搜索模式
+                        if isSearchMode && !platformSongs.isEmpty {
+                            sectionHeader("网易云", count: platformSongs.count)
+                            ForEach(Array(platformSongs.enumerated()), id: \.element.id) { idx, song in
+                                Button {
+                                    player.playPlatformTracks(platformSongs, startAt: idx)
+                                } label: {
+                                    PlatformSongRow(
+                                        song: song,
+                                        isPlaying: player.currentTrack?.platform == song.platform
+                                            && player.currentTrack?.title == song.title
+                                            && player.isPlaying
+                                    )
+                                }
+                                .pressable()
+                                .padding(.horizontal, 12)
+                                Divider()
+                                    .padding(.leading, 64)
                             }
-                            Divider()
-                                .padding(.leading, 64)
                         }
                         if isLoading {
                             ProgressView()
@@ -95,6 +122,7 @@ struct DiscoverView: View {
         page = 1
         hasMore = true
         songs = []
+        platformSongs = []
         errorMessage = nil
         fetch()
     }
@@ -105,6 +133,21 @@ struct DiscoverView: View {
         fetch()
     }
 
+    private func sectionHeader(_ title: String, count: Int) -> some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(AppleTheme.label)
+            Text("\(count)")
+                .font(.caption)
+                .foregroundColor(AppleTheme.secondaryLabel)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
+    }
+
     private func fetch() {
         guard !isLoading else { return }
         isLoading = true
@@ -112,20 +155,31 @@ struct DiscoverView: View {
         let p = page
         Task {
             do {
-                let result: PagedResult<OnlineSong>
                 if kw.isEmpty {
-                    result = try await music.feed(page: p)
-                } else {
-                    result = try await music.search(keyword: kw, page: p)
-                }
-                await MainActor.run {
-                    if p == 1 {
-                        songs = result.items
-                    } else {
-                        songs.append(contentsOf: result.items)
+                    let result: PagedResult<OnlineSong> = try await music.feed(page: p)
+                    await MainActor.run {
+                        if p == 1 {
+                            songs = result.items
+                        } else {
+                            songs.append(contentsOf: result.items)
+                        }
+                        hasMore = result.hasMore
+                        isLoading = false
                     }
-                    hasMore = result.hasMore
-                    isLoading = false
+                } else {
+                    // 搜索模式：本地 + 平台分组
+                    let result = try await music.searchWithPlatforms(keyword: kw, page: p)
+                    await MainActor.run {
+                        if p == 1 {
+                            songs = result.local
+                            platformSongs = result.platforms
+                        } else {
+                            songs.append(contentsOf: result.local)
+                            // 平台结果只取第一页（后端已按相关度截断）
+                        }
+                        hasMore = result.hasMore
+                        isLoading = false
+                    }
                 }
             } catch {
                 await MainActor.run {

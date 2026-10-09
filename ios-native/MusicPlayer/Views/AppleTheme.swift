@@ -163,9 +163,53 @@ struct SongRow: View {
     }
 }
 
+/// 平台歌曲行：带平台角标，标记外部来源（不可下载/收藏）
+struct PlatformSongRow: View {
+    let song: PlatformTrack
+    let isPlaying: Bool
+    @EnvironmentObject private var theme: ThemeSettings
+
+    var body: some View {
+        HStack(spacing: 12) {
+            coverArt(url: song.coverURL, size: 48)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(song.title)
+                        .font(.body)
+                        .foregroundColor(AppleTheme.label)
+                        .lineLimit(1)
+                    // 平台角标
+                    Text(song.platformDisplayName)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(theme.accentColor.opacity(0.15))
+                        .foregroundColor(theme.accentColor)
+                        .clipShape(Capsule())
+                }
+                Text("\(song.artist) · \(formatDuration(song.duration))")
+                    .font(.subheadline)
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .lineLimit(1)
+            }
+            Spacer()
+            if isPlaying {
+                EqualizerBars(isPlaying: true, color: theme.accentColor)
+            } else {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(AppleTheme.tertiaryLabel)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
+    }
+}
+
 /// 封面图：有 URL 加载，无 URL 用音符占位
-func coverArt(url: URL?, size: CGFloat) -> some View {
-    Group {
+func coverArt(url: URL?, size: CGFloat) -> some View {    Group {
         if let url {
             AsyncImage(url: url) { phase in
                 switch phase {
