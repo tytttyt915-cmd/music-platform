@@ -83,7 +83,7 @@ export default () => ({
     itunes: {
       enabled: process.env.ITUNES_ENABLED ?? 'true',
       baseUrl: process.env.ITUNES_BASE_URL ?? 'https://itunes.apple.com',
-      country: process.env.ITUNES_COUNTRY ?? 'CN',
+      country: process.env.ITUNES_COUNTRY ?? 'US',
       timeoutMs: process.env.ITUNES_TIMEOUT_MS ?? '5000',
       maxResults: process.env.ITUNES_MAX_RESULTS ?? '5',
     },

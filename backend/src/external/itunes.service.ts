@@ -41,7 +41,7 @@ export class ITunesService {
     this.baseUrl =
       this.config.get<string>('external.itunes.baseUrl') ??
       'https://itunes.apple.com';
-    this.country = this.config.get<string>('external.itunes.country') ?? 'CN';
+    this.country = this.config.get<string>('external.itunes.country') ?? 'US';
     this.timeoutMs = parseInt(
       this.config.get<string>('external.itunes.timeoutMs') ?? '5000',
       10,
