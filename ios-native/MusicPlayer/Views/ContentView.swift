@@ -73,16 +73,12 @@ struct ContentView: View {
     }
     
     private func glassBackground() -> AnyView {
-        if #available(iOS 26, *) {
-            // iOS 26 液态玻璃：半透明背景 + 玻璃效果
-            return AnyView(
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 20))
-            )
-        } else {
-            return AnyView(theme.backgroundColor.opacity(0.95))
-        }
+        // 磨砂玻璃效果（iOS 15+ 兼容）：半透明材质背景
+        // 注：iOS 26 的 .glassEffect 在 Xcode 16 / iOS 18 SDK 下无法编译，改用 Material
+        return AnyView(
+            Rectangle()
+                .fill(.regularMaterial)
+        )
     }
     
     private func icon(_ i: Int) -> String {
