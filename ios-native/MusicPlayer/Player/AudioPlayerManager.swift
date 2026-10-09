@@ -112,6 +112,7 @@ class AudioPlayerManager: ObservableObject {
         if player == nil {
             player = AVPlayer(playerItem: item)
             addTimeObserver()
+            SleepTimerManager.shared.bind(player: player)
         } else {
             player?.replaceCurrentItem(with: item)
         }
