@@ -109,6 +109,8 @@ class AudioPlayerManager: ObservableObject {
     
     private func playURL(_ url: URL, track: Track) {
         let item = AVPlayerItem(url: url)
+        // 真 FFT 频谱：把 MTAudioProcessingTap 挂到 item 的 audioMix
+        SpectrumAnalyzer.shared.attach(to: item)
         if player == nil {
             player = AVPlayer(playerItem: item)
             addTimeObserver()

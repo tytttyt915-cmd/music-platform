@@ -45,6 +45,10 @@
 		82EC5FACF1F5FA213FC33994 /* CountUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC981940488EBBCDF072A131 /* CountUp.swift */; };
 		B4620A5EA04084E064847C5F /* WaveBackground.metal in Sources */ = {isa = PBXBuildFile; fileRef = 0334C937FA3A5AA0B8E5FE67 /* WaveBackground.metal */; };
 		FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */; };
+		B98D05CA66A6B3E4B00E5A82 /* SleepTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC5C2FDEA5B6A6CCE10EA54 /* SleepTimerManager.swift */; };
+		DD1BEB19F948C2E72EE040EA /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */; };
+		7BE241CEEDB40A4B3D73C729 /* SleepTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */; };
+		552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -95,6 +99,10 @@
 		AC981940488EBBCDF072A131 /* CountUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/CountUp.swift; sourceTree = "<group>"; };
 		0334C937FA3A5AA0B8E5FE67 /* WaveBackground.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = WaveBackground.metal; sourceTree = "<group>"; };
 		8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/AudioReactiveBackground.swift; sourceTree = "<group>"; };
+		6AC5C2FDEA5B6A6CCE10EA54 /* SleepTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepTimerManager.swift; sourceTree = "<group>"; };
+		2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
+		4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SleepTimerView.swift; sourceTree = "<group>"; };
+		A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/CoverColorExtractor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +163,8 @@
 				C1B2C3D4E5F6000100000006 /* LibraryStore.swift */,
 				C5D2B92AD7974B17AD204B01 /* AudioPlayerManager.swift */,
 				124DF637039041B6806790BE /* LibraryStore.swift */,
+				6AC5C2FDEA5B6A6CCE10EA54 /* SleepTimerManager.swift */,
+				2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */,
 			);
 			path = Player;
 			sourceTree = "<group>";
@@ -192,6 +202,8 @@
 				5E8CE819BA81246C80EA5808 /* SpotlightCard.swift */,
 				AC981940488EBBCDF072A131 /* CountUp.swift */,
 				8B63E070CDAD05EEA0FB738C /* AudioReactiveBackground.swift */,
+				4CCCCDE8F4046C8BC7A4E926 /* SleepTimerView.swift */,
+				A711ACCB26A29F682241B503 /* CoverColorExtractor.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -323,6 +335,10 @@
 				82EC5FACF1F5FA213FC33994 /* CountUp.swift in Sources */,
 				B4620A5EA04084E064847C5F /* WaveBackground.metal in Sources */,
 				FA125D69014E2DBABB9E0FC4 /* AudioReactiveBackground.swift in Sources */
+				B98D05CA66A6B3E4B00E5A82 /* SleepTimerManager.swift in Sources */,
+				DD1BEB19F948C2E72EE040EA /* SpectrumAnalyzer.swift in Sources */,
+				7BE241CEEDB40A4B3D73C729 /* SleepTimerView.swift in Sources */,
+				552B60AB2B9471E3E2A974AB /* CoverColorExtractor.swift in Sources */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

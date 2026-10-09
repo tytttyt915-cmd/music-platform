@@ -11,7 +11,8 @@ using namespace metal;
 //
 // 参数：
 //   - time: 秒级时间戳，驱动波流动
-//   - amplitude: 0~1，播放时 0.35~0.9 跳动，暂停时 0.12 保底呼吸感
+//   - lowAmp / midAmp / highAmp: 0~1，三频段能量（真 FFT 实时提取；
+//     无信号时调用方回退为模拟包络）
 //   - tintColor: 品牌色（主题强调色）的 RGB
 //   - bounds: 视图边界（.boundingRect 传入），用于归一化 uv
 //
@@ -22,7 +23,9 @@ using namespace metal;
     float2 position,
     half4 color,
     float time,
-    float amplitude,
+    float lowAmp,
+    float midAmp,
+    float highAmp,
     float3 tintColor,
     float4 bounds
 ) {
@@ -33,15 +36,19 @@ using namespace metal;
     float w1 = sin(uv.x * 6.0 + time * 1.2 + uv.y * 2.0);
     float w2 = sin(uv.x * 11.0 - time * 0.8 + uv.y * 4.0);
     float w3 = sin((uv.x + uv.y) * 4.0 + time * 0.5);
-
-    float wave = w1 * 0.5 + w2 * 0.3 + w3 * 0.2;  // -1 ~ 1
-    wave = wave * 0.5 + 0.5;                       // 0 ~ 1
+    float w1n = w1 * 0.5 + 0.5;  // 0 ~ 1
+    float w2n = w2 * 0.5 + 0.5;
+    float w3n = w3 * 0.5 + 0.5;
 
     // 垂直渐隐：顶部暗、底部亮
     float verticalFade = 1.0 - uv.y * 0.55;
 
-    // 辉光：波峰处提亮，振幅调制整体强度
-    float glow = smoothstep(0.35, 0.95, wave) * (0.12 + amplitude * 0.88) * verticalFade;
+    // 辉光：每层波由对应频段驱动——
+    //   低频（鼓点）→ 主波，中频（人声）→ 细节波，高频（镲片）→ 斜向碎波
+    float g1 = smoothstep(0.35, 0.95, w1n) * (0.10 + lowAmp * 0.90);
+    float g2 = smoothstep(0.35, 0.95, w2n) * (0.10 + midAmp * 0.90);
+    float g3 = smoothstep(0.35, 0.95, w3n) * (0.10 + highAmp * 0.90);
+    float glow = (g1 * 0.5 + g2 * 0.3 + g3 * 0.2) * verticalFade;
 
     // 深底 + 品牌色辉光
     half3 base = half3(0.03, 0.03, 0.055);
