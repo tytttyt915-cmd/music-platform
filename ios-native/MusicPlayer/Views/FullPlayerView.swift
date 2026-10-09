@@ -24,7 +24,8 @@ struct FullPlayerView: View {
 
     var body: some View {
         ZStack {
-            AppleTheme.background.ignoresSafeArea()
+            // Vanta.js WAVES 风格音频律动背景（iOS 17+ Metal Shader，低版本/低电量自动降级）
+            AudioReactiveBackground()
 
             VStack(spacing: 0) {
                 // 顶部把手 + 关闭
@@ -64,7 +65,7 @@ struct FullPlayerView: View {
                 // 歌词开关
                 if let track = player.currentTrack, track.onlineSongId != nil {
                     Button(showLyrics ? "隐藏歌词" : "显示歌词") {
-                        withAnimation(.appleDefault) { showLyrics.toggle() }
+                        withAnimation(.gsapPower3Out) { showLyrics.toggle() }
                     }
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -98,7 +99,7 @@ struct FullPlayerView: View {
         }
         .offset(y: dragOffset)
         .gesture(dismissGesture)
-        .animation(.appleBouncy, value: dragOffset == 0)
+        .animation(.gsapPower3Out, value: dragOffset == 0)
     }
 
     // MARK: - 封面
@@ -213,7 +214,7 @@ struct FullPlayerView: View {
                 if value.translation.height > dismissThreshold || velocity > 400 {
                     dismiss()
                 }
-                // 回位由 .animation(.appleBouncy, value: dragOffset == 0) 处理
+                // 回位由 .animation(.gsapPower3Out, value: dragOffset == 0) 处理
             }
     }
 }
