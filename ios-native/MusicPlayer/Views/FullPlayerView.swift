@@ -19,13 +19,20 @@ struct FullPlayerView: View {
     @State private var isSeeking = false
     @State private var showLyrics = false
     @GestureState private var dragOffset: CGFloat = 0
+    @StateObject private var coverColor = CoverColorExtractor()
 
     private var dismissThreshold: CGFloat { 140 }
+
+    /// 当前页面的强调色：封面主色优先，未提取到时用主题色
+    private var pageAccent: Color {
+        coverColor.isReady ? coverColor.themeColor : theme.accentColor
+    }
 
     var body: some View {
         ZStack {
             // Vanta.js WAVES 风格音频律动背景（iOS 17+ Metal Shader，低版本/低电量自动降级）
-            AudioReactiveBackground()
+            // tint 由封面主色驱动
+            AudioReactiveBackground(coverTint: pageAccent)
 
             VStack(spacing: 0) {
                 // 顶部把手 + 关闭
@@ -69,7 +76,7 @@ struct FullPlayerView: View {
                     }
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(theme.accentColor)
+                    .foregroundColor(pageAccent)
                     .pressable()
                     .padding(.top, 12)
                 }
@@ -100,6 +107,13 @@ struct FullPlayerView: View {
         .offset(y: dragOffset)
         .gesture(dismissGesture)
         .animation(.gsapPower3Out, value: dragOffset == 0)
+        // 切歌时提取封面主色，驱动整页主题
+        .onChange(of: player.currentTrack?.id) { _ in
+            coverColor.extract(from: player.currentTrack?.artworkURL)
+        }
+        .onAppear {
+            coverColor.extract(from: player.currentTrack?.artworkURL)
+        }
     }
 
     // MARK: - 封面
@@ -151,7 +165,7 @@ struct FullPlayerView: View {
                     }
                 }
             )
-            .tint(theme.accentColor)
+            .tint(pageAccent)
 
             HStack {
                 Text(formatDuration(isSeeking ? sliderValue : player.currentTime))

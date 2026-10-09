@@ -20,6 +20,9 @@ struct AudioReactiveBackground: View {
     @EnvironmentObject private var theme: ThemeSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// 封面主色覆盖（nil 时用主题强调色）
+    var coverTint: Color? = nil
+
     var body: some View {
         ZStack {
             if #available(iOS 17, *), shouldUseShader {
@@ -98,10 +101,10 @@ struct AudioReactiveBackground: View {
         ZStack {
             // 深底（固定深色，播放页氛围优先）
             Color(red: 0.03, green: 0.03, blue: 0.055)
-            // 顶部品牌色微光
+            // 顶部品牌色微光（封面主色优先）
             LinearGradient(
                 colors: [
-                    theme.accentColor.opacity(0.22),
+                    (coverTint ?? theme.accentColor).opacity(0.22),
                     Color.clear
                 ],
                 startPoint: .top,
@@ -111,7 +114,7 @@ struct AudioReactiveBackground: View {
             LinearGradient(
                 colors: [
                     Color.clear,
-                    theme.accentColor.opacity(0.12)
+                    (coverTint ?? theme.accentColor).opacity(0.12)
                 ],
                 startPoint: .center,
                 endPoint: .bottom
@@ -122,9 +125,9 @@ struct AudioReactiveBackground: View {
 
     // MARK: - 辅助
 
-    /// 主题强调色 → RGB（供 shader 的 tintColor 用）
+    /// 主题强调色 → RGB（供 shader 的 tintColor 用）；封面主色优先
     private var accentRGB: SIMD3<Float> {
-        let uiColor = UIColor(theme.accentColor)
+        let uiColor = UIColor(coverTint ?? theme.accentColor)
         var r: CGFloat = 0
         var g: CGFloat = 0
         var b: CGFloat = 0
