@@ -1,99 +1,136 @@
 import SwiftUI
 
-// Views 适配（2026-10-09）：老搜索接口 → MusicService.search（返回 PagedResult，取 items）
+// MARK: - DiscoverView（2026-10-09 Apple 原生风重做）
+//
+// 职责：发现页。
+//   - 原生 .searchable 搜索框；有关键字 → music.search，无关键字 → music.feed
+//   - 歌曲行用 SongRow（48pt 封面 + 标题/歌手）；点击播放整单
+//   - 分页：到底自动加载（hasMore）；下拉刷新
+//   - 错误用顶部浮条提示，3 秒自动消失
+
 struct DiscoverView: View {
-    @EnvironmentObject var music: MusicService
-    @EnvironmentObject var player: AudioPlayerManager
-    @EnvironmentObject var theme: ThemeSettings
+    @EnvironmentObject private var music: MusicService
+    @EnvironmentObject private var player: AudioPlayerManager
+
     @State private var keyword = ""
-    @State private var results: [OnlineSong] = []
-    @State private var isSearching = false
+    @State private var songs: [OnlineSong] = []
+    @State private var page = 1
+    @State private var hasMore = true
+    @State private var isLoading = false
     @State private var errorMessage: String?
-    
+
+    private var isSearchMode: Bool { !keyword.trimmingCharacters(in: .whitespaces).isEmpty }
+
     var body: some View {
-        VStack(spacing: 0) {
-                Text("发现")
-                    .font(.largeTitle.bold())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-            VStack(spacing: 0) {
-                // 搜索栏
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(theme.secondaryTextColor)
-                    TextField("搜索歌曲、歌手", text: $keyword, onCommit: search)
-                        .textFieldStyle(.plain)
-                    if !keyword.isEmpty {
-                        Button { keyword = "" } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(theme.secondaryTextColor)
+        ZStack(alignment: .top) {
+            AppleTheme.background.ignoresSafeArea()
+
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    if isLoading && songs.isEmpty {
+                        LoadingStateView()
+                    } else if songs.isEmpty {
+                        EmptyStateView(
+                            icon: isSearchMode ? "magnifyingglass" : "music.note",
+                            title: isSearchMode ? "没有找到相关歌曲" : "暂无推荐",
+                            subtitle: isSearchMode ? "换个关键词试试" : "下拉刷新试试"
+                        )
+                    } else {
+                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                            Button {
+                                player.playOnlineSongs(songs, startAt: idx)
+                            } label: {
+                                SongRow(
+                                    song: song,
+                                    isPlaying: player.currentTrack?.onlineSongId == song.id && player.isPlaying
+                                )
+                            }
+                            .pressable()
+                            .padding(.horizontal, 12)
+                            .onAppear {
+                                if idx == songs.count - 1 { loadMore() }
+                            }
+                            Divider()
+                                .padding(.leading, 64)
+                        }
+                        if isLoading {
+                            ProgressView()
+                                .padding(.vertical, 16)
                         }
                     }
                 }
-                .padding(10)
-                .background((Color.gray as Color).opacity(0.15))
-                .cornerRadius(10)
-                .padding()
-                
-                if isSearching {
-                    ProgressView()
-                        .padding()
-                } else if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .padding()
-                } else if results.isEmpty && !keyword.isEmpty {
-                    Text("无搜索结果")
-                        .foregroundColor(theme.secondaryTextColor)
-                        .padding()
-                } else {
-                    List(results) { song in
-                        Button {
-                            if let idx = results.firstIndex(where: { $0.id == song.id }) {
-                                player.playOnlineSongs(results, startAt: idx)
-                            }
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(song.title)
-                                        .foregroundColor(theme.textColor)
-                                        .lineLimit(1)
-                                    Text("\(song.artist) · \(song.album)")
-                                        .font(.caption)
-                                        .foregroundColor(theme.secondaryTextColor)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                }
-                Spacer()
+                .padding(.bottom, 24)
             }
-            
-            
-            .background(Color.clear)
+            .refreshable { reload() }
+
+            if let errorMessage {
+                ErrorBanner(message: errorMessage)
+                    .padding(.top, 8)
+                    .zIndex(1)
+            }
         }
+        .navigationTitle(isSearchMode ? "搜索" : "发现")
+        .searchable(text: $keyword, prompt: "搜索歌曲、歌手、专辑")
+        .onSubmit(of: .search) { reload() }
+        .onChange(of: keyword) { newValue in
+            if newValue.isEmpty { reload() }
+        }
+        .task { reload() }
     }
-    
-    private func search() {
-        guard !keyword.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        isSearching = true
+
+    // MARK: - 数据
+
+    private func reload() {
+        page = 1
+        hasMore = true
+        songs = []
         errorMessage = nil
+        fetch()
+    }
+
+    private func loadMore() {
+        guard hasMore, !isLoading else { return }
+        page += 1
+        fetch()
+    }
+
+    private func fetch() {
+        guard !isLoading else { return }
+        isLoading = true
+        let kw = keyword.trimmingCharacters(in: .whitespaces)
+        let p = page
         Task {
             do {
-                let page = try await music.search(keyword: keyword)
+                let result: PagedResult<OnlineSong>
+                if kw.isEmpty {
+                    result = try await music.feed(page: p)
+                } else {
+                    result = try await music.search(keyword: kw, page: p)
+                }
                 await MainActor.run {
-                    results = page.items
-                    isSearching = false
+                    if p == 1 {
+                        songs = result.items
+                    } else {
+                        songs.append(contentsOf: result.items)
+                    }
+                    hasMore = result.hasMore
+                    isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "搜索失败：\(error.localizedDescription)"
-                    isSearching = false
+                    isLoading = false
+                    showError("加载失败：\(error.localizedDescription)")
                 }
+            }
+        }
+    }
+
+    private func showError(_ message: String) {
+        errorMessage = message
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await MainActor.run {
+                withAnimation(.appleDefault) { errorMessage = nil }
             }
         }
     }

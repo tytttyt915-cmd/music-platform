@@ -1,11 +1,15 @@
-// Views 适配（2026-10-09）：重写。老二维码登录已删除；改为短信验证码登录 +
-// 游客试听（调 AuthService），并保留注销账号闭环（Apple 审核要求）。
 import SwiftUI
 
+// MARK: - LoginView（2026-10-09 Apple 原生风重做）
+//
+// 职责：登录页（短信验证码 + 游客试听）。
+//   - 原生 Form 分组：手机号登录区 / 游客试听区
+//   - 已登录：显示身份 + 退出登录 / 注销账号（Apple 审核要求保留注销闭环）
+//   - 错误用红色文字行内提示
+
 struct LoginView: View {
-    @EnvironmentObject var auth: AuthService
-    @EnvironmentObject var theme: ThemeSettings
-    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject private var auth: AuthService
+    @Environment(\.dismiss) private var dismiss
 
     @State private var phone = ""
     @State private var code = ""
@@ -15,7 +19,7 @@ struct LoginView: View {
     @State private var showDeleteConfirm = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if auth.isLoggedIn {
                     loggedInView
@@ -24,8 +28,11 @@ struct LoginView: View {
                 }
             }
             .navigationTitle("登录")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button("关闭") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("关闭") { dismiss() }
+                }
             }
         }
     }
@@ -34,30 +41,40 @@ struct LoginView: View {
 
     private var loginForm: some View {
         Form {
-            Section("手机号登录") {
+            Section {
                 TextField("11 位手机号", text: $phone)
                     .keyboardType(.numberPad)
+                    .textContentType(.telephoneNumber)
                 HStack {
                     TextField("6 位验证码", text: $code)
                         .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
                     Button(codeSent ? "重发" : "发送验证码") { sendCode() }
                         .disabled(isBusy || phone.count != 11)
                 }
+            } header: {
+                Text("手机号登录")
+            }
+
+            Section {
                 Button("登录") { verify() }
                     .disabled(isBusy || phone.count != 11 || code.count != 6)
             }
+
             Section {
                 Button("游客试听") { guest() }
                     .disabled(isBusy)
             } footer: {
                 Text("游客模式可直接试听，无需手机号")
             }
+
             if let error = errorMessage {
                 Section {
                     Text(error).foregroundColor(.red)
                 }
             }
         }
+        .disabled(isBusy)
     }
 
     // MARK: - 已登录：退出 / 注销
@@ -65,8 +82,7 @@ struct LoginView: View {
     private var loggedInView: some View {
         Form {
             Section {
-                Text(auth.isGuest ? "当前为游客身份" : "已登录")
-                    .foregroundColor(theme.textColor)
+                LabeledContent("当前身份", value: auth.isGuest ? "游客" : "已登录用户")
             }
             Section {
                 Button("退出登录", role: .destructive) {

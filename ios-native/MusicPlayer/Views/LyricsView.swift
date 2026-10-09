@@ -1,40 +1,51 @@
 import SwiftUI
 
-// Views 适配（2026-10-09）：songId Int → String（UUID）；api.lyrics(for:) → music.lyrics(id:)
+// MARK: - LyricsView（2026-10-09 Apple 原生风重做）
+//
+// 职责：歌词页。
+//   - 当前行高亮（强调色 + 粗体 + 放大），其余行次文字
+//   - 自动滚动到当前行（anchor .center，弹簧动画）
+//   - 无歌词显示空态
+
 struct LyricsView: View {
     let songId: String
-    @EnvironmentObject var music: MusicService
-    @EnvironmentObject var player: AudioPlayerManager
-    @EnvironmentObject var theme: ThemeSettings
+    @EnvironmentObject private var music: MusicService
+    @EnvironmentObject private var player: AudioPlayerManager
+    @EnvironmentObject private var theme: ThemeSettings
+
     @State private var lines: [LyricLine] = []
     @State private var isLoading = false
-    
+
     var body: some View {
         Group {
             if isLoading {
                 ProgressView()
             } else if lines.isEmpty {
                 Text("暂无歌词")
-                    .foregroundColor(theme.secondaryTextColor)
+                    .font(.subheadline)
+                    .foregroundColor(AppleTheme.secondaryLabel)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: 14) {
                             ForEach(lines) { line in
+                                let current = isCurrent(line)
                                 Text(line.text)
-                                    .font(.system(size: isCurrent(line) ? 18 : 15))
-                                    .fontWeight(isCurrent(line) ? .bold : .regular)
-                                    .foregroundColor(isCurrent(line) ? theme.accentColor : theme.textColor.opacity(0.7))
+                                    .font(.system(size: current ? 19 : 15, weight: current ? .bold : .regular))
+                                    .foregroundColor(current ? theme.accentColor : AppleTheme.secondaryLabel)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: .infinity)
                                     .id(line.id)
+                                    .animation(.appleDefault, value: current)
                             }
                         }
-                        .padding()
+                        .padding(.vertical, 20)
+                        .padding(.horizontal, 24)
                     }
                     .onChange(of: currentIndex) { idx in
-                        if idx >= 0 && idx < lines.count {
-                            withAnimation {
-                                proxy.scrollTo(lines[idx].id, anchor: .center)
-                            }
+                        guard idx >= 0, idx < lines.count else { return }
+                        withAnimation(.appleDefault) {
+                            proxy.scrollTo(lines[idx].id, anchor: .center)
                         }
                     }
                 }
@@ -42,7 +53,7 @@ struct LyricsView: View {
         }
         .onAppear { load() }
     }
-    
+
     private var currentIndex: Int {
         let t = player.currentTime
         var idx = -1
@@ -51,12 +62,12 @@ struct LyricsView: View {
         }
         return idx
     }
-    
+
     private func isCurrent(_ line: LyricLine) -> Bool {
         guard let idx = lines.firstIndex(where: { $0.id == line.id }) else { return false }
         return idx == currentIndex
     }
-    
+
     private func load() {
         isLoading = true
         Task {

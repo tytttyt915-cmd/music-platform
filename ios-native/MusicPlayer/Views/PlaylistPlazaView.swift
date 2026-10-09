@@ -1,91 +1,161 @@
-// Views 适配（2026-10-09）：重写。老歌单搜索在新后端无对应接口；
-// 改为"我的歌单"：创建歌单（POST /playlists，需登录），歌单 ID 本地持久化，
-// 点歌单进详情看歌曲列表并可直接播放。后端暂无"我的歌单列表"接口，用本地 ID 列表补位。
 import SwiftUI
 
+// MARK: - PlaylistPlazaView（2026-10-09 Apple 原生风重做）
+//
+// 职责：歌单页。
+//   - "我的歌单"：创建歌单（POST /playlists，需登录）；歌单 ID 本地持久化
+//     （后端暂无"我的歌单列表"接口，用本地 ID 列表逐个拉详情补位，失效 ID 自动丢弃）
+//   - 歌单卡片：64pt 圆角封面 + 标题/信息 + chevron，原生列表风
+//   - 新建用原生 sheet + TextField；点卡片 → NavigationLink 进详情
+
 struct PlaylistPlazaView: View {
-    @EnvironmentObject var music: MusicService
-    @EnvironmentObject var auth: AuthService
-    @EnvironmentObject var player: AudioPlayerManager
-    @EnvironmentObject var theme: ThemeSettings
+    @EnvironmentObject private var music: MusicService
+    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var player: AudioPlayerManager
+    @EnvironmentObject private var theme: ThemeSettings
 
     @State private var newTitle = ""
     @State private var playlists: [OnlinePlaylist] = []
     @State private var isLoading = false
     @State private var isCreating = false
+    @State private var showCreateSheet = false
     @State private var errorMessage: String?
-    @State private var showingDetail: PlaylistDetail?
-    @State private var detailPresented = false
 
     private let idsKey = "myPlaylistIDs"
 
     var body: some View {
-        VStack(spacing: 0) {
-            Text("歌单")
-                .font(.largeTitle.bold())
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.top, 8)
+        ZStack(alignment: .top) {
+            AppleTheme.background.ignoresSafeArea()
 
-            if !auth.isLoggedIn {
-                Spacer()
-                Text("登录后创建和管理歌单")
-                    .foregroundColor(theme.secondaryTextColor)
-                Spacer()
-            } else {
-                VStack(spacing: 0) {
-                    HStack {
-                        TextField("新建歌单名称", text: $newTitle)
-                            .textFieldStyle(.roundedBorder)
-                        Button("创建") { create() }
-                            .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                    }
-                    .padding()
-
-                    if let error = errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                            .padding(.horizontal)
-                    }
-                    if isLoading { ProgressView().padding() }
-
-                    List(playlists) { playlist in
-                        Button { loadDetail(playlist) } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(playlist.title)
-                                        .foregroundStyle(theme.textColor)
-                                    Text("\(playlist.trackCount)首")
-                                        .font(.caption)
-                                        .foregroundStyle(theme.secondaryTextColor)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(theme.secondaryTextColor)
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    if !auth.isLoggedIn {
+                        notLoggedInView
+                    } else if isLoading && playlists.isEmpty {
+                        LoadingStateView()
+                    } else if playlists.isEmpty {
+                        EmptyStateView(
+                            icon: "music.note.list",
+                            title: "还没有歌单",
+                            subtitle: "点右上角 + 创建一个吧"
+                        )
+                    } else {
+                        ForEach(playlists) { playlist in
+                            NavigationLink {
+                                PlaylistDetailScreen(playlistID: playlist.id, title: playlist.title)
+                            } label: {
+                                playlistCard(playlist)
                             }
+                            .pressable()
+                            Divider().padding(.leading, 88)
                         }
                     }
-                    .listStyle(.plain)
+                }
+                .padding(.bottom, 24)
+            }
+            .refreshable { reload() }
+
+            if let errorMessage {
+                ErrorBanner(message: errorMessage)
+                    .padding(.top, 8)
+                    .zIndex(1)
+            }
+        }
+        .navigationTitle("歌单")
+        .toolbar {
+            if auth.isLoggedIn {
+                Button {
+                    newTitle = ""
+                    showCreateSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 17, weight: .semibold))
                 }
             }
         }
-        .background(Color.clear)
+        .sheet(isPresented: $showCreateSheet) {
+            createSheet
+        }
         .onAppear { reload() }
-        .sheet(isPresented: $detailPresented) {
-            if let detail = showingDetail {
-                NavigationView {
-                    PlaylistDetailView(detail: detail)
-                }
-            }
-        }
+        .onChange(of: auth.isLoggedIn) { _ in reload() }
     }
 
-    // MARK: - 数据
+    // MARK: - 子视图
 
-    /// 用本地持久化的歌单 ID 逐个拉详情；失效 ID 自动丢弃
+    private func playlistCard(_ playlist: OnlinePlaylist) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: AppleTheme.artworkRadius)
+                    .fill(theme.accentColor.opacity(0.15))
+                    .frame(width: 64, height: 64)
+                Image(systemName: "music.note.list")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(theme.accentColor)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(playlist.title)
+                    .font(.body)
+                    .foregroundColor(AppleTheme.label)
+                    .lineLimit(1)
+                Text("\(playlist.trackCount) 首 · \(playlist.creator)")
+                    .font(.subheadline)
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .lineLimit(1)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(AppleTheme.tertiaryLabel)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .contentShape(Rectangle())
+    }
+
+    private var notLoggedInView: some View {
+        EmptyStateView(
+            icon: "music.note.list",
+            title: "登录后创建和管理歌单",
+            subtitle: "游客模式可以先去发现页试听"
+        )
+    }
+
+    private var createSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("歌单名称", text: $newTitle)
+                } footer: {
+                    Text("给你的歌单起个名字")
+                }
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage).foregroundColor(.red)
+                    }
+                }
+            }
+            .navigationTitle("新建歌单")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { showCreateSheet = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("创建") { create() }
+                        .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    // MARK: - 数据（逻辑沿用旧版，仅 UI 重做）
+
     private func reload() {
-        guard auth.isLoggedIn else { return }
+        guard auth.isLoggedIn else {
+            playlists = []
+            return
+        }
         isLoading = true
         errorMessage = nil
         Task {
@@ -124,6 +194,7 @@ struct PlaylistPlazaView: View {
                     playlists.insert(playlist, at: 0)
                     newTitle = ""
                     isCreating = false
+                    showCreateSheet = false
                 }
             } catch {
                 await MainActor.run {
@@ -133,56 +204,75 @@ struct PlaylistPlazaView: View {
             }
         }
     }
-
-    private func loadDetail(_ playlist: OnlinePlaylist) {
-        Task {
-            do {
-                let detail = try await music.playlistDetail(id: playlist.id)
-                await MainActor.run {
-                    showingDetail = detail
-                    detailPresented = true
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = "加载歌单失败：\(error.localizedDescription)"
-                }
-            }
-        }
-    }
 }
 
-/// 歌单详情：歌曲列表，点击播放（与本文件配套，非独立复用组件）
-private struct PlaylistDetailView: View {
-    @EnvironmentObject var player: AudioPlayerManager
-    @EnvironmentObject var theme: ThemeSettings
-    let detail: PlaylistDetail
+// MARK: - 歌单详情
+
+private struct PlaylistDetailScreen: View {
+    let playlistID: String
+    let title: String
+
+    @EnvironmentObject private var music: MusicService
+    @EnvironmentObject private var player: AudioPlayerManager
+
+    @State private var songs: [OnlineSong] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
 
     var body: some View {
-        Group {
-            if detail.songs.isEmpty {
-                Text("歌单暂无歌曲")
-                    .foregroundColor(theme.secondaryTextColor)
-            } else {
-                List(detail.songs) { song in
-                    Button {
-                        if let idx = detail.songs.firstIndex(where: { $0.id == song.id }) {
-                            player.playOnlineSongs(detail.songs, startAt: idx)
-                        }
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(song.title)
-                                .foregroundColor(theme.textColor)
-                                .lineLimit(1)
-                            Text(song.artist)
-                                .font(.caption)
-                                .foregroundColor(theme.secondaryTextColor)
-                                .lineLimit(1)
+        ZStack(alignment: .top) {
+            AppleTheme.background.ignoresSafeArea()
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    if isLoading {
+                        LoadingStateView()
+                    } else if songs.isEmpty {
+                        EmptyStateView(
+                            icon: "music.note",
+                            title: "歌单是空的",
+                            subtitle: "去发现页加几首吧"
+                        )
+                    } else {
+                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                            Button {
+                                player.playOnlineSongs(songs, startAt: idx)
+                            } label: {
+                                SongRow(
+                                    song: song,
+                                    isPlaying: player.currentTrack?.onlineSongId == song.id && player.isPlaying
+                                )
+                            }
+                            .pressable()
+                            .padding(.horizontal, 12)
+                            Divider().padding(.leading, 64)
                         }
                     }
                 }
-                .listStyle(.plain)
+                .padding(.bottom, 24)
+            }
+            if let errorMessage {
+                ErrorBanner(message: errorMessage)
+                    .padding(.top, 8)
+                    .zIndex(1)
             }
         }
-        .navigationTitle(detail.playlist.title)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
+        .task { await load() }
+    }
+
+    private func load() async {
+        do {
+            let detail = try await music.playlistDetail(id: playlistID)
+            await MainActor.run {
+                songs = detail.songs
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "加载失败：\(error.localizedDescription)"
+                isLoading = false
+            }
+        }
     }
 }
