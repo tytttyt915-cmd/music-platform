@@ -54,12 +54,12 @@
 		C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */; };
 		E5F60718293A4B5C6D7E8F90 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60718293A4B5C6D7E8F90A1 /* Haptics.swift */; };
 		D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */; };
-		E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DD894334F7A35167264BE6 /* RadioView.swift */; };
 		12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */; };
 		F1A2B3C4D5E6000100000001 /* FutureTrendingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */; };
 		F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */; };
 		F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */; };
 		F1A2B3C4D5E6000300000001 /* DailyRecommendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000300000002 /* DailyRecommendView.swift */; };
+		40EF3AE912FBCB1E1422B325 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85E41F938FD27D844511EC6 /* SearchView.swift */; };
 		F1A2B3C4D5E6000200000001 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000200000002 /* FlowLayout.swift */; };
 /* End PBXBuildFile section */
 
@@ -80,6 +80,7 @@
 		4DD87A83EF6F6D78D5824C28 /* FullPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullPlayerView.swift; sourceTree = "<group>"; };
 		0BD007029AC770324B353228 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		55527A7EEC0E2F0748F6FAA6 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		C85E41F938FD27D844511EC6 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		A6380006E86A475C85CF2576 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FEFF688D71D34DACA91F48E6 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		08364F28A9E34309BDA24E5E /* PlaylistPlazaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistPlazaView.swift; sourceTree = "<group>"; };
@@ -120,7 +121,6 @@
 		D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/MiniLyricProvider.swift; sourceTree = "<group>"; };
 		F60718293A4B5C6D7E8F90A1 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/Haptics.swift; sourceTree = "<group>"; };
 		C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SourceSwitchView.swift; sourceTree = "<group>"; };
-		29DD894334F7A35167264BE6 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 		95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/WaveformProgressView.swift; sourceTree = "<group>"; };
 		F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutureTrendingView.swift; sourceTree = "<group>"; };
 		F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistImportView.swift; sourceTree = "<group>"; };
@@ -206,6 +206,7 @@
 				4DD87A83EF6F6D78D5824C28 /* FullPlayerView.swift */,
 				0BD007029AC770324B353228 /* ProfileView.swift */,
 				55527A7EEC0E2F0748F6FAA6 /* SettingsView.swift */,
+				C85E41F938FD27D844511EC6 /* SearchView.swift */,
 				A6380006E86A475C85CF2576 /* ContentView.swift */,
 				FEFF688D71D34DACA91F48E6 /* DiscoverView.swift */,
 				08364F28A9E34309BDA24E5E /* PlaylistPlazaView.swift */,
@@ -234,7 +235,6 @@
 				D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */,
 				F60718293A4B5C6D7E8F90A1 /* Haptics.swift */,
 				C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */,
-				29DD894334F7A35167264BE6 /* RadioView.swift */,
 				95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */,
 				F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */,
 				F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */,
@@ -380,12 +380,12 @@
 				C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */,
 				E5F60718293A4B5C6D7E8F90 /* Haptics.swift in Sources */,
 				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */,
-				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */,
 				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */,
 				F1A2B3C4D5E6000100000001 /* FutureTrendingView.swift in Sources */,
 				F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */,
 				F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */,
 				F1A2B3C4D5E6000300000001 /* DailyRecommendView.swift in Sources */,
+				40EF3AE912FBCB1E1422B325 /* SearchView.swift in Sources */,
 				F1A2B3C4D5E6000200000001 /* FlowLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -184,18 +184,6 @@ final class MusicService: ObservableObject {
         return peaks.map { Float($0) }
     }
 
-    // MARK: - 电台
-
-    /// 电台列表（Radio Browser）。tag 为空返回热门。
-    func radioStations(tag: String? = nil, limit: Int = 30) async throws -> [RadioStationItem] {
-        var query: [String: String] = ["limit": String(limit)]
-        if let tag = tag, !tag.isEmpty {
-            query["tag"] = tag
-        }
-        let dto: [RadioStationDTO] = try await api.get("/music/radio", query: query)
-        return dto.map { $0.toModel() }
-    }
-
     // MARK: - 歌单
 
     /// 创建歌单
@@ -472,27 +460,6 @@ private struct PlaylistImportDTO: Decodable {
 private struct ImportUnmatchedDTO: Decodable {
     let title: String
     let artist: String
-}
-
-private struct RadioStationDTO: Decodable {
-    let name: String
-    let url: String
-    let favicon: String?
-    let tags: [String]?
-    let country: String?
-    let bitrate: Int?
-    let codec: String?
-
-    func toModel() -> RadioStationItem {
-        RadioStationItem(
-            name: name,
-            url: url,
-            favicon: favicon.flatMap(URL.init(string:)),
-            tags: tags ?? [],
-            country: country,
-            bitrate: bitrate ?? 0
-        )
-    }
 }
 
 /// 搜索响应：list 里混了三类（本地/平台/iTunes），靠字段区分

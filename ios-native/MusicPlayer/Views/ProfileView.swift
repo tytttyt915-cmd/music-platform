@@ -71,6 +71,18 @@ struct ProfileView: View {
                     }
                     .pressable()
 
+                    // v4.4：本地音乐从 TabBar 移入"我的"（4 Tab 精简）
+                    NavigationLink {
+                        LocalMusicView()
+                    } label: {
+                        menuRow(
+                            icon: "folder",
+                            title: "本地音乐",
+                            subtitle: "设备上的音频文件"
+                        )
+                    }
+                    .pressable()
+
                     Button {
                         showSettings = true
                     } label: {
