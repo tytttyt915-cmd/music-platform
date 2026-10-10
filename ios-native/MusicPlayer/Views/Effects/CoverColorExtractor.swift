@@ -71,11 +71,12 @@ final class CoverColorExtractor: ObservableObject {
         let g = CGFloat(bitmap[1]) / 255
         let b = CGFloat(bitmap[2]) / 255
 
-        // 转 HSB，增强饱和度、保证最低明度，避免灰扑扑
+        // 转 HSB：impeccable quieter 原则——饱和度钳在 70-85%，不刺眼；
+        // 轻微提升（×1.2）但上限 0.85，灰色保持灰，不强制上色
         var h: CGFloat = 0, s: CGFloat = 0, br: CGFloat = 0
         UIColor(red: r, green: g, blue: b, alpha: 1).getHue(&h, saturation: &s, brightness: &br, alpha: nil)
-        let boostedS = min(1, s * 1.6 + 0.15)
-        let boostedB = min(1, max(br, 0.55))
-        return Color(hue: Double(h), saturation: Double(boostedS), brightness: Double(boostedB))
+        let quietS = min(0.85, s * 1.2)
+        let quietB = min(1, max(br, 0.55))
+        return Color(hue: Double(h), saturation: Double(quietS), brightness: Double(quietB))
     }
 }

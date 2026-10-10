@@ -23,8 +23,35 @@ struct DiscoverView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var sourceSwitchSong: OnlineSong?
+    // Beans 风格：平台分段器选中态（nil = 全部）
+    @State private var selectedPlatform: String?
 
     private var isSearchMode: Bool { !keyword.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// Beans 风格时间问候语
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<9: return "早上好"
+        case 9..<12: return "上午好"
+        case 12..<14: return "中午好"
+        case 14..<18: return "下午好"
+        case 18..<23: return "晚上好"
+        default: return "夜深了"
+        }
+    }
+
+    /// 热搜（Beans 风格胶囊，前 3 带图标）
+    private let hotSearches = [
+        "夜航星", "APT.", "晴天", "七里香",
+        "海阔天空", "青花瓷", "稻香", "有何不可",
+    ]
+
+    /// 分段器过滤后的平台分组
+    private var filteredPlatformGroups: [(platform: String, songs: [PlatformTrack])] {
+        guard let sel = selectedPlatform else { return groupedPlatformSongs }
+        return groupedPlatformSongs.filter { $0.platform == sel }
+    }
 
     /// 平台结果按平台分组（网易云/QQ/酷狗/付费音源各一段），固定顺序
     private var groupedPlatformSongs: [(platform: String, songs: [PlatformTrack])] {
@@ -48,11 +75,29 @@ struct DiscoverView: View {
 
             ScrollView {
                 LazyVStack(spacing: 0) {
+                    // Beans 风格：时间问候语（仅非搜索模式）
+                    if !isSearchMode {
+                        greetingHeader
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 12)
+                    }
                     // v4.2 功能入口（仅非搜索模式）：未来飙升榜 / 歌单导入
                     if !isSearchMode {
                         featureEntries
                             .padding(.horizontal, 12)
-                            .padding(.top, 4)
+                            .padding(.bottom, 12)
+                    }
+                    // Beans 风格：热搜胶囊（仅非搜索模式）
+                    if !isSearchMode {
+                        hotSearchCapsules
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 12)
+                    }
+                    // Beans 风格：平台分段器（仅搜索模式有平台结果时）
+                    if isSearchMode && !groupedPlatformSongs.isEmpty {
+                        platformSegmented
+                            .padding(.horizontal, 16)
                             .padding(.bottom, 8)
                     }
                     if isLoading && songs.isEmpty && platformSongs.isEmpty {
@@ -101,8 +146,16 @@ struct DiscoverView: View {
                             }
                         }
                         // 平台结果（网易云/QQ/酷狗/付费音源）：仅搜索模式，按平台分组
+                        // Beans #4 教训：空分组给"暂无结果"提示，不静默消失
                         if isSearchMode && !platformSongs.isEmpty {
-                            ForEach(groupedPlatformSongs, id: \.platform) { group in
+                            if filteredPlatformGroups.isEmpty {
+                                Text("该平台暂无结果，换个平台试试")
+                                    .font(.body)
+                                    .foregroundColor(AppleTheme.tertiaryLabel)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 24)
+                            }
+                            ForEach(filteredPlatformGroups, id: \.platform) { group in
                                 sectionHeader(
                                     PlatformTrack.displayName(for: group.platform),
                                     count: group.songs.count
@@ -152,7 +205,9 @@ struct DiscoverView: View {
                         }
                     }
                 }
-                .padding(.bottom, 24)
+                // Beans #22 教训：底部留白必须躲开悬浮 MiniPlayer + TabBar，
+                // 否则最后两行被遮住点不到
+                .padding(.bottom, player.currentTrack != nil ? 170 : 100)
             }
             .refreshable { reload() }
 
@@ -192,6 +247,104 @@ struct DiscoverView: View {
         fetch()
     }
 
+    // MARK: - Beans 风格组件
+
+    /// 时间问候语："晚上好" + "发现好音乐"
+    private var greetingHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(greeting)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(AppleTheme.label)
+            Text("发现好音乐")
+                .font(.body)
+                .foregroundColor(AppleTheme.secondaryLabel)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 热搜胶囊：前 3 带图标（皇冠/火焰/星星），其余带数字
+    private var hotSearchCapsules: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("热搜")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(AppleTheme.label)
+            FlowLayout(spacing: 8) {
+                ForEach(Array(hotSearches.enumerated()), id: \.offset) { idx, term in
+                    Button {
+                        Haptics.tap()
+                        keyword = term
+                        reload()
+                    } label: {
+                        HStack(spacing: 4) {
+                            if idx == 0 {
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.orange)
+                            } else if idx == 1 {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.red)
+                            } else if idx == 2 {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.yellow)
+                            } else {
+                                Text("\(idx + 1)")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(AppleTheme.tertiaryLabel)
+                            }
+                            Text(term)
+                                .font(.body)
+                                .foregroundColor(AppleTheme.label)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .liquidGlass(cornerRadius: 16)
+                    }
+                    .pressable()
+                }
+            }
+        }
+    }
+
+    /// 平台分段器：全部 ｜ 网易云 ｜ QQ音乐 ｜ 酷狗 …
+    private var platformSegmented: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                platformChip(title: "全部", platform: nil)
+                ForEach(groupedPlatformSongs, id: \.platform) { group in
+                    platformChip(
+                        title: PlatformTrack.displayName(for: group.platform),
+                        platform: group.platform
+                    )
+                }
+            }
+        }
+    }
+
+    private func platformChip(title: String, platform: String?) -> some View {
+        let selected = selectedPlatform == platform
+        return Button {
+            Haptics.tap()
+            withAnimation(.gsapPower2Out) { selectedPlatform = platform }
+        } label: {
+            Text(title)
+                .font(.body)
+                .fontWeight(selected ? .semibold : .regular)
+                .foregroundColor(selected ? .white : AppleTheme.label)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    selected ? theme.accentColor : Color(.tertiarySystemFill),
+                    in: Capsule()
+                )
+        }
+        .pressable()
+    }
+
     // MARK: - v4.2 功能入口
 
     /// 未来飙升榜 / 歌单导入：横向双卡片
@@ -225,21 +378,21 @@ struct DiscoverView: View {
 
     private func featureCard(icon: String, title: String, subtitle: String, badge: String?) -> some View {
         HStack(spacing: 10) {
+            // impeccable: 去掉 icon-tile（40×40 圆角瓦片是最高频 AI tell），
+            // SF Symbol 直接着主题色，图标本身就是视觉锚
             Image(systemName: icon)
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(theme.accentColor)
-                .frame(width: 40, height: 40)
-                .background(theme.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(title)
-                        .font(.subheadline)
+                        .font(.body)
                         .fontWeight(.semibold)
                         .foregroundColor(AppleTheme.label)
                     if let badge {
                         Text(badge)
-                            .font(.caption2)
+                            .font(.caption)
                             .fontWeight(.bold)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)

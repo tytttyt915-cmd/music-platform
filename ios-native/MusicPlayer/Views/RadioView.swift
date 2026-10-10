@@ -101,7 +101,7 @@ private struct RadioTagButton: View {
     var body: some View {
         Button(action: onTap) {
             Text(tag)
-                .font(.subheadline)
+                .font(.body)
                 .fontWeight(isSelected ? .semibold : .regular)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)

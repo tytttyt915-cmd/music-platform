@@ -24,15 +24,18 @@ class ThemeSettings: ObservableObject {
     }
     
     var accentColor: Color {
+        // impeccable quieter：饱和度压到 75%，不刺眼
+        let base: Color
         switch accent {
-        case .red: return .red
-        case .orange: return .orange
-        case .yellow: return .yellow
-        case .green: return .green
-        case .blue: return .blue
-        case .purple: return .purple
-        case .pink: return .pink
+        case .red: base = .red
+        case .orange: base = .orange
+        case .yellow: base = .yellow
+        case .green: base = .green
+        case .blue: base = .blue
+        case .purple: base = .purple
+        case .pink: base = .pink
         }
+        return base.quieter()
     }
     
     var backgroundColor: Color {

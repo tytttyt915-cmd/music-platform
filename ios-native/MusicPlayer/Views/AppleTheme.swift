@@ -151,7 +151,7 @@ struct SongRow: View {
                     .foregroundColor(isPlaying ? .orange : AppleTheme.label)
                     .lineLimit(1)
                 Text("\(song.artist) · \(formatDuration(song.duration))")
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(AppleTheme.secondaryLabel)
                     .lineLimit(1)
             }
@@ -201,7 +201,7 @@ struct PlatformSongRow: View {
                         .lineLimit(1)
                     // 平台角标
                     Text(song.platformDisplayName)
-                        .font(.caption2)
+                        .font(.caption)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -210,7 +210,7 @@ struct PlatformSongRow: View {
                         .clipShape(Capsule())
                 }
                 Text("\(song.artist) · \(formatDuration(song.duration))")
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(AppleTheme.secondaryLabel)
                     .lineLimit(1)
             }
@@ -291,7 +291,7 @@ struct EmptyStateView: View {
                 .foregroundColor(AppleTheme.secondaryLabel)
             if let subtitle {
                 Text(subtitle)
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(AppleTheme.tertiaryLabel)
             }
         }
@@ -307,7 +307,7 @@ struct LoadingStateView: View {
             ProgressView()
                 .scaleEffect(1.2)
             Text("正在加载…")
-                .font(.subheadline)
+                .font(.body)
                 .foregroundColor(AppleTheme.secondaryLabel)
         }
         .frame(maxWidth: .infinity)
@@ -321,7 +321,7 @@ struct ErrorBanner: View {
 
     var body: some View {
         Text(message)
-            .font(.subheadline)
+            .font(.body)
             .foregroundColor(.white)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -339,4 +339,18 @@ func formatDuration(_ seconds: Double) -> String {
     guard seconds.isFinite, seconds > 0 else { return "--:--" }
     let total = Int(seconds)
     return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+// MARK: - Color 饱和度（impeccable quieter）
+
+extension Color {
+    /// 把饱和度压到 0.75（quieter 原则：70-85%），保留色相与明度
+    func quieter(_ target: CGFloat = 0.75) -> Color {
+        let ui = UIColor(self)
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        // 只降不升：灰色保持灰
+        let ns = min(s, target)
+        return Color(UIColor(hue: h, saturation: ns, brightness: b, alpha: a))
+    }
 }

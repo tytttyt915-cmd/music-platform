@@ -83,7 +83,7 @@ struct PlaylistImportView: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("一键搬家")
-                    .font(.subheadline)
+                    .font(.body)
                     .fontWeight(.semibold)
                     .foregroundColor(AppleTheme.label)
                 Text("把你在其他 App 的歌单搬过来，自动匹配本地曲库")
@@ -150,7 +150,7 @@ struct PlaylistImportView: View {
     private var supportedList: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("支持的链接")
-                .font(.subheadline)
+                .font(.body)
                 .fontWeight(.semibold)
                 .foregroundColor(AppleTheme.label)
             ForEach([
@@ -219,7 +219,7 @@ struct PlaylistImportView: View {
                     .font(.headline)
                     .foregroundColor(AppleTheme.label)
                 Text("「\(report.playlistName)」")
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(AppleTheme.secondaryLabel)
                     .lineLimit(1)
                 // 命中率
@@ -238,7 +238,7 @@ struct PlaylistImportView: View {
             if !report.unmatched.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("未命中的歌曲（\(report.unmatched.count)）")
-                        .font(.subheadline)
+                        .font(.body)
                         .fontWeight(.semibold)
                         .foregroundColor(AppleTheme.label)
                         .padding(.horizontal, 12)
@@ -275,7 +275,7 @@ struct PlaylistImportView: View {
                 self.report = nil
             } label: {
                 Text("再搬一个歌单")
-                    .font(.subheadline)
+                    .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(theme.accentColor)
                     .padding(.vertical, 10)

@@ -41,7 +41,7 @@ struct ProfileView: View {
                         }
                         VStack(alignment: .leading, spacing: 4) {
                             Text(displayName)
-                                .font(.title3)
+                                .font(.headline)
                                 .fontWeight(.bold)
                                 .foregroundColor(AppleTheme.label)
                             HStack(spacing: 6) {
@@ -49,7 +49,7 @@ struct ProfileView: View {
                                     .fill(auth.isLoggedIn ? Color.green : AppleTheme.tertiaryLabel)
                                     .frame(width: 8, height: 8)
                                 Text(statusText)
-                                    .font(.subheadline)
+                                    .font(.body)
                                     .foregroundColor(AppleTheme.secondaryLabel)
                             }
                         }
@@ -93,14 +93,11 @@ struct ProfileView: View {
 
     private func menuRow(icon: String, title: String, subtitle: String) -> some View {
         HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: AppleTheme.controlRadius)
-                    .fill(Color(.tertiarySystemFill))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(theme.accentColor)
-            }
+            // impeccable: 去掉 icon-tile，SF Symbol 直接着主题色
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(theme.accentColor)
+                .frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.body)

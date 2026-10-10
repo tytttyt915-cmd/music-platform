@@ -50,42 +50,20 @@ struct FullPlayerView: View {
             AudioReactiveBackground(coverTint: pageAccent)
 
             VStack(spacing: 0) {
-                // 顶部把手 + 关闭
-                HStack {
-                    Spacer(minLength: 44)
-                    Capsule()
-                        .fill(AppleTheme.tertiaryLabel.opacity(0.5))
-                        .frame(width: 36, height: 5)
-                    Spacer(minLength: 0)
-                    // 睡眠定时入口
-                    Button { showSleepTimer = true } label: {
-                        Image(systemName: sleepTimer.isActive ? "moon.zzz.fill" : "moon.zzz")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(sleepTimer.isActive ? pageAccent : AppleTheme.secondaryLabel)
-                            .frame(width: 44, height: 32)
-                            .contentShape(Rectangle())
-                    }
-                    .pressable()
-                    .sheet(isPresented: $showSleepTimer) {
-                        SleepTimerView()
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+                // Beans 风格顶栏：返回（玻璃圆）｜ 正在播放/歌名双行 ｜ 睡眠+更多（玻璃圆）
+                beansTopBar
+                    .padding(.top, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 4)
 
-                Spacer(minLength: 8)
-
-                // 封面
-                coverView
-                    .padding(.horizontal, 32)
-
-                Spacer(minLength: 12)
+                // 黑胶封面（圆形，播放时旋转）
+                vinylCover
+                    .padding(.top, 8)
 
                 // 歌曲信息 + 收藏（心动飞行动画）
                 if let track = player.currentTrack {
                     HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 4) {
                             BlurText(text: track.title)
                                 .font(.title2)
                                 .fontWeight(.bold)
@@ -100,41 +78,41 @@ struct FullPlayerView: View {
                         favoriteButton(for: track)
                     }
                     .padding(.horizontal, 32)
-                }
-
-                // 歌词开关
-                if let track = player.currentTrack, track.onlineSongId != nil {
-                    Button(showLyrics ? "隐藏歌词" : "显示歌词") {
-                        withAnimation(.gsapPower3Out) { showLyrics.toggle() }
-                    }
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(pageAccent)
-                    .pressable()
                     .padding(.top, 12)
                 }
 
-                // 歌词
+                // Beans 风格：歌词直接内嵌预览（3 行，当前行高亮），不藏在按钮后
+                if let track = player.currentTrack, track.onlineSongId != nil {
+                    LyricsPreview(songId: track.onlineSongId!)
+                        .frame(height: 88)
+                        .padding(.top, 8)
+                        .onTapGesture {
+                            // 点歌词展开全屏歌词
+                            withAnimation(.gsapPower3Out) { showLyrics.toggle() }
+                        }
+                }
+
+                // 全屏歌词（展开态）
                 if showLyrics,
                    let track = player.currentTrack,
                    let songId = track.onlineSongId {
                     LyricsView(songId: songId)
-                        .frame(height: 180)
+                        .frame(maxHeight: 220)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                Spacer(minLength: 12)
+                Spacer(minLength: 8)
 
-                // 进度条
-                progressView
+                // 进度条 + ±15s（Beans 播客级精细控制）
+                progressWithSkip
+                    .padding(.horizontal, 24)
+
+                // Beans 风格 5 按钮：循环｜上一曲｜播放(大)｜下一曲｜队列
+                beansControlBar
                     .padding(.horizontal, 32)
+                    .padding(.top, 16)
 
-                // 玻璃控制条
-                controlBar
-                    .padding(.horizontal, 48)
-                    .padding(.top, 20)
-
-                Spacer(minLength: 24)
+                Spacer(minLength: 20)
             }
 
             // v4.2 心动飞行动画层（在播放页内，保证可见）
@@ -152,9 +130,110 @@ struct FullPlayerView: View {
         }
     }
 
-    // MARK: - 封面（v4.2：从列表 cell 飞进来的 hero 转场）
+    // MARK: - Beans 风格顶栏（对称三件套）
 
-    private var coverView: some View {
+    private var beansTopBar: some View {
+        HStack {
+            // 返回（玻璃圆）
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(AppleTheme.label)
+                    .frame(width: 40, height: 40)
+                    .liquidGlass(cornerRadius: 20)
+                    .contentShape(Circle())
+            }
+            .pressable()
+
+            Spacer()
+
+            // 正在播放 / 歌名双行
+            VStack(spacing: 2) {
+                Text("正在播放")
+                    .font(.caption)
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                if let track = player.currentTrack {
+                    Text(track.title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppleTheme.label)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            // 睡眠定时（玻璃圆）
+            Button { showSleepTimer = true } label: {
+                Image(systemName: sleepTimer.isActive ? "moon.zzz.fill" : "moon.zzz")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(sleepTimer.isActive ? pageAccent : AppleTheme.label)
+                    .frame(width: 40, height: 40)
+                    .liquidGlass(cornerRadius: 20)
+                    .contentShape(Circle())
+            }
+            .pressable()
+            .sheet(isPresented: $showSleepTimer) {
+                SleepTimerView()
+            }
+
+            // 更多（玻璃圆）
+            Button { Haptics.tap() } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(AppleTheme.label)
+                    .frame(width: 40, height: 40)
+                    .liquidGlass(cornerRadius: 20)
+                    .contentShape(Circle())
+            }
+            .pressable()
+        }
+    }
+
+    // MARK: - 黑胶封面（Beans 风格：圆形，播放时旋转）
+
+    @State private var vinylRotation: Double = 0
+    @State private var vinylTimer: Timer?
+
+    private var vinylCover: some View {
+        ZStack {
+            // 黑胶底盘（比封面略大，营造黑胶感）
+            Circle()
+                .fill(Color.black.opacity(0.85))
+                .frame(width: 292, height: 292)
+                .shadow(color: .black.opacity(0.4), radius: 24, x: 0, y: 12)
+            // 黑胶纹理圈
+            ForEach([262, 232, 202], id: \.self) { d in
+                Circle()
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    .frame(width: CGFloat(d), height: CGFloat(d))
+            }
+            // 封面（圆形，hero 转场 + 旋转）
+            vinylCoverImage
+                .frame(width: 240, height: 240)
+                .clipShape(Circle())
+            // 中心轴孔
+            Circle()
+                .fill(AppleTheme.background)
+                .frame(width: 36, height: 36)
+                .overlay(
+                    Circle()
+                        .fill(pageAccent)
+                        .frame(width: 10, height: 10)
+                )
+        }
+        .rotationEffect(.degrees(vinylRotation))
+        .onChange(of: player.isPlaying) { playing in
+            playing ? startVinyl() : stopVinyl()
+        }
+        .onAppear {
+            if player.isPlaying { startVinyl() }
+        }
+        .onDisappear { stopVinyl() }
+    }
+
+    /// 黑胶上的封面图（带 hero 转场配对）
+    private var vinylCoverImage: some View {
         Group {
             if let ns = coverNS,
                let flyID = player.coverFlySongID,
@@ -165,10 +244,23 @@ struct FullPlayerView: View {
                 coverContent
             }
         }
-        .frame(width: 280, height: 280)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 24, x: 0, y: 12)
     }
+
+    private func startVinyl() {
+        stopVinyl()
+        // 12 秒一圈，0.05s 步进
+        vinylTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            vinylRotation += 1.5
+            if vinylRotation >= 360 { vinylRotation -= 360 }
+        }
+    }
+
+    private func stopVinyl() {
+        vinylTimer?.invalidate()
+        vinylTimer = nil
+    }
+
+    // MARK: - 封面内容（v4.2 hero 转场 + Beans 黑胶共用）
 
     private var coverContent: some View {
         Group {
@@ -220,6 +312,10 @@ struct FullPlayerView: View {
 
     private func startHeartFly(track: Track, currentlyFavorite: Bool) {
         guard heartPhase == 0 else { return }
+        // Beans #5 教训：数据先行——先 toggle 收藏（动画中断也不丢），
+        // 飞行只是纯视觉反馈
+        favorites.toggle(track)
+        Haptics.tap()
         // 阶段 1：飞行的爱心出现在按钮位置（成为几何源）
         heartPhase = 1
         // 下一 runloop 切到阶段 2：落点成为几何源，爱心飞过去
@@ -227,13 +323,11 @@ struct FullPlayerView: View {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.75)) {
                 heartPhase = 2
             }
-            // 落地后收尾：真正切换收藏状态
+            // 落地后收尾
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                favorites.toggle(track)
                 heartPhase = 0
             }
         }
-        // 取消收藏也给同样的飞行反馈（心飞走）
         _ = currentlyFavorite
     }
 
@@ -326,6 +420,115 @@ struct FullPlayerView: View {
         .liquidGlass(cornerRadius: 28)
     }
 
+    // MARK: - 进度条 + ±15s（Beans 播客级精细控制）
+
+    private var progressWithSkip: some View {
+        HStack(spacing: 12) {
+            // 快退 15s
+            Button {
+                Haptics.tap()
+                let t = max(player.currentTime - 15, 0)
+                player.seek(to: t)
+            } label: {
+                Image(systemName: "gobackward.15")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+
+            progressView
+
+            // 快进 15s
+            Button {
+                Haptics.tap()
+                let t = min(player.currentTime + 15, player.duration)
+                player.seek(to: t)
+            } label: {
+                Image(systemName: "goforward.15")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+        }
+    }
+
+    // MARK: - Beans 风格 5 按钮：循环｜上一曲｜播放(大)｜下一曲｜队列
+
+    @State private var showQueue = false
+
+    private var beansControlBar: some View {
+        HStack(spacing: 0) {
+            // 循环模式
+            Button { Haptics.tap(); player.cycleRepeatMode() } label: {
+                Image(systemName: player.repeatMode.icon)
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(player.repeatMode == .sequential ? AppleTheme.secondaryLabel : pageAccent)
+                    .frame(width: 56, height: 56)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+
+            Spacer()
+
+            // 上一曲
+            Button { Haptics.tap(); player.previous() } label: {
+                Image(systemName: "backward.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundColor(AppleTheme.label)
+                    .frame(width: 60, height: 60)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+
+            Spacer()
+
+            // 播放/暂停（大，视觉焦点）
+            Button { Haptics.tap(); player.togglePlayPause() } label: {
+                MorphPlayIcon(isPlaying: player.isPlaying, size: 38)
+                    .foregroundColor(.white)
+                    .frame(width: 76, height: 76)
+                    .background(pageAccent)
+                    .clipShape(Circle())
+                    .shadow(color: pageAccent.opacity(0.4), radius: 16, x: 0, y: 8)
+                    .contentShape(Circle())
+            }
+            .pressable()
+            .clickSpark(color: pageAccent.opacity(0.9))
+
+            Spacer()
+
+            // 下一曲
+            Button { Haptics.tap(); player.next() } label: {
+                Image(systemName: "forward.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundColor(AppleTheme.label)
+                    .frame(width: 60, height: 60)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+
+            Spacer()
+
+            // 队列
+            Button { Haptics.tap(); showQueue = true } label: {
+                Image(systemName: "list.bullet")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .frame(width: 56, height: 56)
+                    .contentShape(Rectangle())
+            }
+            .pressable()
+            .sheet(isPresented: $showQueue) {
+                QueueSheet()
+            }
+        }
+        .padding(.vertical, 8)
+    }
+
     // MARK: - 下滑关闭手势（1:1 跟手，可打断）
 
     private var dismissGesture: some Gesture {
@@ -342,5 +545,59 @@ struct FullPlayerView: View {
                 }
                 // 回位由 .animation(.gsapPower3Out, value: dragOffset == 0) 处理
             }
+    }
+}
+
+// MARK: - QueueSheet（播放队列）
+
+/// Beans 风格 5 按钮中的"队列"：当前播放列表，点按切歌
+struct QueueSheet: View {
+    @EnvironmentObject private var player: AudioPlayerManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(Array(player.currentQueue.enumerated()), id: \.element.id) { idx, track in
+                    Button {
+                        Haptics.tap()
+                        player.play(at: idx)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            if idx == player.queueIndex {
+                                Image(systemName: "speaker.wave.2.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 14))
+                            } else {
+                                Text("\(idx + 1)")
+                                    .font(.caption)
+                                    .foregroundColor(AppleTheme.tertiaryLabel)
+                                    .frame(width: 20)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(track.title)
+                                    .font(.body)
+                                    .foregroundColor(idx == player.queueIndex ? .orange : AppleTheme.label)
+                                    .lineLimit(1)
+                                Text(track.artist)
+                                    .font(.caption)
+                                    .foregroundColor(AppleTheme.secondaryLabel)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("播放队列")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }

@@ -98,7 +98,7 @@ struct PlaylistPlazaView: View {
                     .foregroundColor(AppleTheme.label)
                     .lineLimit(1)
                 Text("\(playlist.trackCount) 首 · \(playlist.creator)")
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(AppleTheme.secondaryLabel)
                     .lineLimit(1)
             }

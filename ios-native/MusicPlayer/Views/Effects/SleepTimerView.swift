@@ -55,7 +55,7 @@ struct SleepTimerView: View {
                 }
                 Section {
                     Text("时间到后音量会在 30 秒内逐渐降低，然后暂停播放。")
-                        .font(.footnote)
+                        .font(.body)
                         .foregroundColor(AppleTheme.secondaryLabel)
                 }
             }

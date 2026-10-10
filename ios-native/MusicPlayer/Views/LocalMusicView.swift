@@ -59,7 +59,7 @@ struct LocalMusicView: View {
                         .foregroundColor(AppleTheme.label)
                         .lineLimit(1)
                     Text("\(track.artist) · \(formatDuration(track.duration))")
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(AppleTheme.secondaryLabel)
                         .lineLimit(1)
                 }

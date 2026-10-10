@@ -1,6 +1,28 @@
 import Foundation
 import AVFoundation
 import Combine
+
+/// 循环模式（Beans 风格）：顺序播放 → 单曲循环 → 随机播放
+enum RepeatMode: CaseIterable {
+    case sequential, single, shuffle
+
+    var icon: String {
+        switch self {
+        case .sequential: return "repeat"
+        case .single: return "repeat.1"
+        case .shuffle: return "shuffle"
+        }
+    }
+
+    /// 点击循环按钮：顺序 → 单曲 → 顺序（随机走 shuffle 入口，暂放 2 档）
+    func next() -> RepeatMode {
+        switch self {
+        case .sequential: return .single
+        case .single: return .sequential
+        case .shuffle: return .sequential
+        }
+    }
+}
 import MediaPlayer
 
 // Views 适配（2026-10-09）：playOnline 改为直调 MusicService.streamURL（每次现取，
@@ -16,7 +38,9 @@ class AudioPlayerManager: ObservableObject {
     @Published var showFullPlayer = false
     /// 封面飞行动画：正在飞的歌曲 onlineSongId；nil = 无动画
     @Published var coverFlySongID: String?
-    
+    /// 循环模式（Beans 风格 5 按钮布局）：顺序 → 单曲循环 → 随机
+    @Published var repeatMode: RepeatMode = .sequential
+
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var queue: [Track] = []
@@ -38,6 +62,14 @@ class AudioPlayerManager: ObservableObject {
         guard !tracks.isEmpty else { return }
         queue = tracks
         currentIndex = min(index, tracks.count - 1)
+        currentTrack = queue[currentIndex]
+        playCurrent()
+    }
+
+    /// 跳到队列指定位置（队列页点选）
+    func play(at index: Int) {
+        guard index >= 0, index < queue.count else { return }
+        currentIndex = index
         currentTrack = queue[currentIndex]
         playCurrent()
     }
@@ -91,9 +123,22 @@ class AudioPlayerManager: ObservableObject {
         updateNowPlaying()
     }
     
+    /// 切换循环模式
+    func cycleRepeatMode() {
+        repeatMode = repeatMode.next()
+    }
+
+    /// 当前播放队列（供队列列表 UI）
+    var currentQueue: [Track] { queue }
+    var queueIndex: Int { currentIndex }
+
     func next() {
         guard !queue.isEmpty else { return }
-        currentIndex = (currentIndex + 1) % queue.count
+        if repeatMode == .shuffle {
+            currentIndex = Int.random(in: 0..<queue.count)
+        } else {
+            currentIndex = (currentIndex + 1) % queue.count
+        }
         currentTrack = queue[currentIndex]
         playCurrent()
     }

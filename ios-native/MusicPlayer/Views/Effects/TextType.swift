@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// React Bits TextType：逐字打出，带光标闪烁。
-/// 用途：OnlineSearchView 搜索框 placeholder 轮播——把"空状态"变成"邀请"。
+/// 用途：搜索框 placeholder 轮播——把"空状态"变成"邀请"。
 struct TextType: View {
     var texts: [String]
     var typeSpeed: Double = 0.06      // 打字速度（秒/字）

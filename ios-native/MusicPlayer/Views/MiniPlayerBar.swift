@@ -25,7 +25,7 @@ struct MiniPlayerBar: View {
                 if let track = player.currentTrack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(track.title)
-                            .font(.subheadline)
+                            .font(.body)
                             .fontWeight(.medium)
                             .foregroundColor(AppleTheme.label)
                             .lineLimit(1)

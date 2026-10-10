@@ -55,7 +55,7 @@ struct SourceSwitchView: View {
                         }
                         Section {
                             Text("锁定平台源后，播放走该平台直链；源失效时自动降级本地，不会断播。")
-                                .font(.footnote)
+                                .font(.body)
                                 .foregroundColor(AppleTheme.secondaryLabel)
                         }
                     }

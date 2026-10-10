@@ -99,11 +99,11 @@ struct FutureTrendingView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text("AI 预测未来 7 天")
-                        .font(.subheadline)
+                        .font(.body)
                         .fontWeight(.semibold)
                         .foregroundColor(AppleTheme.label)
                     Text("AI 预测")
-                        .font(.caption2)
+                        .font(.caption)
                         .fontWeight(.bold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -143,7 +143,7 @@ struct FutureTrendingView: View {
         HStack(spacing: 12) {
             // 排名
             Text("\(rank)")
-                .font(.title3)
+                .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(rankColor(rank))
                 .frame(width: 28, alignment: .center)
@@ -157,13 +157,13 @@ struct FutureTrendingView: View {
                     .lineLimit(1)
                 HStack(spacing: 6) {
                     Text("\(item.song.artist) · \(formatDuration(item.song.duration))")
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(AppleTheme.secondaryLabel)
                         .lineLimit(1)
                     // 趋势角标：只有真预测且上升才显示
                     if let rising = item.risingText {
                         Text(rising)
-                            .font(.caption2)
+                            .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.green)
                     }
@@ -178,7 +178,7 @@ struct FutureTrendingView: View {
                         .font(.caption)
                         .foregroundColor(theme.accentColor)
                     Text("预测播放")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundColor(AppleTheme.tertiaryLabel)
                 }
             } else if player.currentTrack?.onlineSongId == item.song.id && player.isPlaying {

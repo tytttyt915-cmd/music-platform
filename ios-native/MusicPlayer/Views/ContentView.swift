@@ -87,7 +87,7 @@ struct ContentView: View {
                         Image(systemName: isSelected ? tab.selectedIcon : tab.icon)
                             .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
                         Text(tab.title)
-                            .font(.caption2)
+                            .font(.caption)
                             .fontWeight(isSelected ? .semibold : .regular)
                     }
                     .foregroundColor(isSelected ? theme.accentColor : AppleTheme.secondaryLabel)
