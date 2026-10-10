@@ -52,6 +52,8 @@
 		58EDA2947AB6CC53355A44E7 /* TextType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 974404C02DF3BC3E41B4CD29 /* TextType.swift */; };
 		CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E414A20A2F892A0A8251A03D /* DecryptedText.swift */; };
 		C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */ = {isa = PBXBuildFile; fileRef = D825FA5A785DD68987F78D60 /* ClickSpark.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* MorphPlayIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */; };
+		C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */; };
 		D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */; };
 		E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DD894334F7A35167264BE6 /* RadioView.swift */; };
 		12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */; };
@@ -112,6 +114,8 @@
 		974404C02DF3BC3E41B4CD29 /* TextType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/TextType.swift; sourceTree = "<group>"; };
 		E414A20A2F892A0A8251A03D /* DecryptedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/DecryptedText.swift; sourceTree = "<group>"; };
 		D825FA5A785DD68987F78D60 /* ClickSpark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ClickSpark.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/MorphPlayIcon.swift; sourceTree = "<group>"; };
+		D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/MiniLyricProvider.swift; sourceTree = "<group>"; };
 		C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SourceSwitchView.swift; sourceTree = "<group>"; };
 		29DD894334F7A35167264BE6 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 		95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/WaveformProgressView.swift; sourceTree = "<group>"; };
@@ -219,6 +223,8 @@
 				974404C02DF3BC3E41B4CD29 /* TextType.swift */,
 				E414A20A2F892A0A8251A03D /* DecryptedText.swift */,
 				D825FA5A785DD68987F78D60 /* ClickSpark.swift */,
+				B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */,
+				D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */,
 				C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */,
 				29DD894334F7A35167264BE6 /* RadioView.swift */,
 				95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */,
@@ -360,6 +366,8 @@
 				58EDA2947AB6CC53355A44E7 /* TextType.swift in Sources */,
 				CB705A149CBA71EA5C304DEC /* DecryptedText.swift in Sources */,
 				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* MorphPlayIcon.swift in Sources */,
+				C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */,
 				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */,
 				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */,
 				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */,

@@ -11,9 +11,11 @@ import SwiftUI
 struct MiniPlayerBar: View {
     @EnvironmentObject private var player: AudioPlayerManager
     @EnvironmentObject private var theme: ThemeSettings
+    @EnvironmentObject private var music: MusicService
     var onTap: () -> Void
 
     @GestureState private var dragOffset: CGFloat = 0
+    @StateObject private var lyricProvider = MiniLyricProvider()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,10 +29,12 @@ struct MiniPlayerBar: View {
                             .fontWeight(.medium)
                             .foregroundColor(AppleTheme.label)
                             .lineLimit(1)
-                        Text(track.artist)
+                        // Beans 对标：MiniPlayer 显示实时歌词行，无歌词时回退歌手名
+                        Text(lyricProvider.currentLine ?? track.artist)
                             .font(.caption)
                             .foregroundColor(AppleTheme.secondaryLabel)
                             .lineLimit(1)
+                            .animation(.easeInOut(duration: 0.25), value: lyricProvider.currentLine)
                     }
                 }
                 Spacer()
@@ -41,8 +45,7 @@ struct MiniPlayerBar: View {
                 Button {
                     player.togglePlayPause()
                 } label: {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20, weight: .semibold))
+                    MorphPlayIcon(isPlaying: player.isPlaying, size: 16)
                         .foregroundColor(AppleTheme.label)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -87,5 +90,8 @@ struct MiniPlayerBar: View {
                 }
         )
         .animation(.gsapPower2Out, value: dragOffset == 0)
+        .onAppear {
+            lyricProvider.bind(player: player, music: music)
+        }
     }
 }

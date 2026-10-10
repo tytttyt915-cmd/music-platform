@@ -11,6 +11,11 @@ class AudioPlayerManager: ObservableObject {
     @Published private(set) var isPlaying: Bool = false
     @Published var currentTime: Double = 0
     @Published var duration: Double = 0
+    /// FullPlayer 展示状态（ContentView 的 fullScreenCover 绑定到这里，
+    /// 供"封面飞进播放页"动画跨视图协调）
+    @Published var showFullPlayer = false
+    /// 封面飞行动画：正在飞的歌曲 onlineSongId；nil = 无动画
+    @Published var coverFlySongID: String?
     
     private var player: AVPlayer?
     private var timeObserver: Any?

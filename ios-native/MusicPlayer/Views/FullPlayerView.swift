@@ -188,9 +188,9 @@ struct FullPlayerView: View {
             .pressable()
             Spacer()
             Button { player.togglePlayPause() } label: {
-                Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 72, weight: .semibold))
+                MorphPlayIcon(isPlaying: player.isPlaying, size: 40)
                     .foregroundColor(AppleTheme.label)
+                    .frame(width: 72, height: 72)
                     .contentShape(Rectangle())
             }
             .pressable()
