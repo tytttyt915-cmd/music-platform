@@ -43,11 +43,68 @@ struct FullPlayerView: View {
         coverColor.isReady ? coverColor.themeColor : theme.accentColor
     }
 
+    /// Beans 风格封面底：封面图模糊放大铺满 + 深色压暗。
+    /// 主色可见（不再是纯黑），上层文字用白色保证对比度。
+    /// [Beans#背景] [impeccable-Contrast]
+    private var coverBlurBackground: some View {
+        Group {
+            if let url = player.currentTrack?.artworkURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .blur(radius: 60, opaque: true)
+                            .overlay(
+                                // 压暗：顶部 40% → 中部 50% → 底部 60%
+                                // （上层 AudioReactiveBackground 自带罩层，总压暗足够白字对比度）
+                                LinearGradient(
+                                    colors: [
+                                        Color.black.opacity(0.40),
+                                        Color.black.opacity(0.50),
+                                        Color.black.opacity(0.60)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    default:
+                        // 无封面/加载失败：用主色的深色渐变兜底（不是纯黑）
+                        coverTintFallback
+                    }
+                }
+            } else {
+                coverTintFallback
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    /// 主色深色渐变兜底：明度压到 0.10~0.22，有色相但保持深色氛围
+    /// [impeccable-Quieter] 饱和度钳 0.85
+    private var coverTintFallback: some View {
+        let ui = UIColor(pageAccent)
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        let darkB = min(max(b * 0.30, 0.10), 0.22)
+        let base = Color(hue: Double(h), saturation: Double(min(s, 0.85)), brightness: Double(darkB))
+        return LinearGradient(
+            colors: [base, base.opacity(0.55), Color(red: 0.03, green: 0.03, blue: 0.055)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
     var body: some View {
         ZStack {
+            // Beans 风格：封面模糊放大 + 压暗做底（主色可见，不再是纯黑）
+            coverBlurBackground
+
             // Vanta.js WAVES 风格音频律动背景（iOS 17+ Metal Shader，低版本/低电量自动降级）
-            // tint 由封面主色驱动
+            // tint 由封面主色驱动；半透明叠加，让底层封面色透出来
             AudioReactiveBackground(coverTint: pageAccent)
+                .opacity(0.55)
 
             VStack(spacing: 0) {
                 // Beans 风格顶栏：返回（玻璃圆）｜ 正在播放/歌名双行 ｜ 睡眠+更多（玻璃圆）
@@ -121,6 +178,9 @@ struct FullPlayerView: View {
         .offset(y: dragOffset)
         .gesture(dismissGesture)
         .animation(.gsapPower3Out, value: dragOffset == 0)
+        // 播放页强制深色：背景是深色氛围，文字必须用白色（修复黑字 on 黑底隐形）
+        // [impeccable-Contrast] 深色底 + 白字，对比度 > 7:1
+        .preferredColorScheme(.dark)
         // 切歌时提取封面主色，驱动整页主题
         .onChange(of: player.currentTrack?.id) { _ in
             coverColor.extract(from: player.currentTrack?.artworkURL)
