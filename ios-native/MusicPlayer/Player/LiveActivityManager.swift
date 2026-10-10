@@ -10,9 +10,9 @@ import ActivityKit
 //
 // 1. 锁屏 / 控制中心（立即生效，无需额外 target）：
 //    MPNowPlayingInfoCenter —— 歌名/歌手/封面/进度/播放速率，
-//    进度由系统按 playbackRate 自动推进，0.5s 粒度的 currentTime 足够实时。
+//    进度由系统按 playbackRate 自动推进。
 //
-// 2. 灵动岛 Live Activity（ActivityKit）：
+// 2. 灵动岛 Live Activity（ActivityKit，iOS 16.2+）：
 //    本文件已含完整的 ActivityAttributes 定义与 start/update/end 逻辑。
 //    注意：灵动岛/锁屏真正渲染出 Live Activity 卡片，需要一个 Widget Extension
 //    target（含 ActivityConfiguration UI）。当前 Ad Hoc 只有一个主 App 的
@@ -22,7 +22,7 @@ import ActivityKit
 
 /// 灵动岛 Activity 属性（Widget Extension 接入后由系统渲染）
 #if canImport(ActivityKit)
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 struct NowPlayingActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var title: String
@@ -37,10 +37,9 @@ struct NowPlayingActivityAttributes: ActivityAttributes {
 final class LiveActivityManager {
     static let shared = LiveActivityManager()
 
-    #if canImport(ActivityKit)
-    @available(iOS 16.1, *)
-    private var currentActivity: Activity<NowPlayingActivityAttributes>?
-    #endif
+    /// 当前 Live Activity（Any 擦除类型：stored property 上不能挂 @available，
+    /// 实际类型为 Activity<NowPlayingActivityAttributes>，只在 iOS 16.2+ 读写）
+    private var currentActivity: Any?
 
     private init() {}
 
@@ -49,7 +48,9 @@ final class LiveActivityManager {
     /// 切歌 / 播放 / 暂停时调用，同步锁屏 + 灵动岛
     func sync(track: Track?, isPlaying: Bool, currentTime: Double, duration: Double) {
         updateNowPlaying(track: track, isPlaying: isPlaying, currentTime: currentTime, duration: duration)
-        updateLiveActivity(track: track, isPlaying: isPlaying, currentTime: currentTime, duration: duration)
+        if #available(iOS 16.2, *) {
+            updateLiveActivity(track: track, isPlaying: isPlaying, currentTime: currentTime, duration: duration)
+        }
     }
 
     // MARK: - 锁屏（MPNowPlayingInfoCenter，立即生效）
@@ -82,11 +83,11 @@ final class LiveActivityManager {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
-    // MARK: - 灵动岛（ActivityKit，需 Widget Extension 渲染）
+    // MARK: - 灵动岛（ActivityKit iOS 16.2+，需 Widget Extension 渲染）
 
+    #if canImport(ActivityKit)
+    @available(iOS 16.2, *)
     private func updateLiveActivity(track: Track?, isPlaying: Bool, currentTime: Double, duration: Double) {
-        #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *) else { return }
         guard let track = track else {
             endLiveActivity()
             return
@@ -98,10 +99,9 @@ final class LiveActivityManager {
             progress: progress,
             isPlaying: isPlaying
         )
-        if let activity = currentActivity {
+        if let activity = currentActivity as? Activity<NowPlayingActivityAttributes> {
             // 同一首歌：更新；切歌：结束旧的开新的
-            let attributes = activity.attributes
-            if attributes.songId == track.id {
+            if activity.attributes.songId == track.id {
                 Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }
             } else {
                 endLiveActivity()
@@ -110,12 +110,10 @@ final class LiveActivityManager {
         } else {
             startLiveActivity(track: track, state: state)
         }
-        #endif
     }
 
-    #if canImport(ActivityKit)
+    @available(iOS 16.2, *)
     private func startLiveActivity(track: Track, state: NowPlayingActivityAttributes.ContentState) {
-        guard #available(iOS 16.1, *) else { return }
         let attributes = NowPlayingActivityAttributes(songId: track.id)
         do {
             // 先清掉可能残留的旧 activity，避免快速切歌时叠加
@@ -133,8 +131,8 @@ final class LiveActivityManager {
         }
     }
 
+    @available(iOS 16.2, *)
     private func endLiveActivity() {
-        guard #available(iOS 16.1, *) else { return }
         Task {
             let activities = Activity<NowPlayingActivityAttributes>.activities
             for activity in activities {

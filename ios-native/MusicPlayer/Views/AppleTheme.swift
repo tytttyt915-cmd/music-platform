@@ -171,6 +171,17 @@ struct SongRow: View {
         .scaleEffect(isPlaying ? 1.012 : 1.0)
         .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isPlaying)
     }
+
+    /// 封面飞行：只有被点中的那一行参与（id 配对），避免多行冲突
+    @ViewBuilder
+    private var coverWithFly: some View {
+        let art = coverArt(url: song.coverURL, size: 48)
+        if let ns = coverNS, player.coverFlySongID == song.id {
+            art.matchedGeometryEffect(id: "coverfly", in: ns, isSource: !player.showFullPlayer)
+        } else {
+            art
+        }
+    }
 }
 
 /// 平台歌曲行：带平台角标，标记外部来源（不可下载/收藏）
@@ -215,17 +226,6 @@ struct PlatformSongRow: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
         .contentShape(Rectangle())
-    }
-
-    /// 封面飞行：只有被点中的那一行参与（id 配对），避免多行冲突
-    @ViewBuilder
-    private var coverWithFly: some View {
-        let art = coverArt(url: song.coverURL, size: 48)
-        if let ns = coverNS, player.coverFlySongID == song.id {
-            art.matchedGeometryEffect(id: "coverfly", in: ns, isSource: !player.showFullPlayer)
-        } else {
-            art
-        }
     }
 }
 

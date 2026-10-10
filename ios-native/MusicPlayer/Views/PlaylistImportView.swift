@@ -118,7 +118,7 @@ struct PlaylistImportView: View {
                 }
             }
             .padding(12)
-            .background(AppleTheme.secondaryBackground)
+            .background(AppleTheme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button {
