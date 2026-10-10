@@ -83,6 +83,18 @@ struct ProfileView: View {
                     }
                     .pressable()
 
+                    // v4.5：我的歌单从发现 Tab 移入"我的"（发现 Tab 改为歌单广场）
+                    NavigationLink {
+                        MyPlaylistsView()
+                    } label: {
+                        menuRow(
+                            icon: "music.note.list",
+                            title: "我的歌单",
+                            subtitle: "创建和管理歌单"
+                        )
+                    }
+                    .pressable()
+
                     Button {
                         showSettings = true
                     } label: {

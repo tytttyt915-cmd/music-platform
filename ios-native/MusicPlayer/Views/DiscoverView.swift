@@ -31,6 +31,10 @@ struct DiscoverView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var sourceSwitchSong: OnlineSong?
+    // 网易云真实内容（直连 ncm-api：大卡片真实封面）
+    @State private var dailyCoverURL: URL?
+    @State private var trendingCoverURL: URL?
+    @State private var isLoadingPlaylists = false
     // Beans 风格：平台分段器选中态（nil = 全部）
     @State private var selectedPlatform: String?
 
@@ -119,9 +123,9 @@ struct DiscoverView: View {
                             .padding(.top, 8)
                             .padding(.bottom, 12)
                     }
-                    // v4.3 功能卡片（仅非搜索模式）：未来飙升榜 / 每日推荐 / 歌单导入
+                    // v4.4 真实封面大卡片（仅非搜索模式）：每日推荐 / 未来飙升榜
                     if !isSearchMode {
-                        featureEntries
+                        realCoverEntries
                             .padding(.bottom, 12)
                     }
                     // Beans 风格：热搜胶囊（仅非搜索模式）
@@ -277,6 +281,10 @@ struct DiscoverView: View {
         enabledPlatforms = []
         errorMessage = nil
         fetch()
+        // 非搜索模式：拉取大卡片真实封面
+        if keyword.trimmingCharacters(in: .whitespaces).isEmpty {
+            fetchDiscoverContent()
+        }
     }
 
     private func loadMore() {
@@ -383,108 +391,128 @@ struct DiscoverView: View {
         .pressable()
     }
 
-    // MARK: - v4.3 功能卡片（Beans home.jpg 双卡片语言重做）
+    // MARK: - v4.4 真实封面（网易云直连）
     //
     // 工具规则标注：
-    // [Beans#1] 大卡片三层结构：图标左上 + 大标题 + 副标题，圆角 20pt
-    // [Beans#2] 图标去底座化：线性图标直接着色，无 40×40 圆角底座
-    // [Beans#7] 颜色即信息：三卡各一色（主题红/墨蓝/中性灰）
-    // [impeccable-Quieter] 渐变饱和度压到 70-85%，深色打底
-    // [impeccable-Typeset] 字号 5 档内（20/13/11 + 系统标题档）
-    // [impeccable-Refuse] 禁用紫色渐变（Beans 私人漫游的设计债，不抄）
+    // [Beans#内容为王] 大卡片用真实封面图打底，不再是渐变占位
+    // [Beans#1] 大卡片三层结构：封面图 + 底部大标题 + 副标题，圆角 20pt
+    // [Beans#2] 图标去底座化：线性图标直接着白色
+    // [Beans#7] 颜色即信息：AI 徽章保留（飙升榜标识）
+    // [impeccable-Typeset] 字号 5 档内（20/13/11）
     // [三铁律①] 按压反馈走 .pressable()
 
-    /// 功能卡片：横滑三卡（未来飙升榜 / 每日推荐 / 歌单导入）
-    private var featureEntries: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                NavigationLink {
-                    FutureTrendingView()
-                } label: {
-                    featureCard(
-                        icon: "chart.line.uptrend.xyaxis",
-                        title: "未来飙升榜",
-                        subtitle: "AI 预测 7 天热歌",
-                        badge: "AI 预测",
-                        tint: theme.accentColor
-                    )
-                }
-                .pressable()
-
-                NavigationLink {
-                    DailyRecommendView()
-                } label: {
-                    featureCard(
-                        icon: "calendar",
-                        title: "每日推荐",
-                        subtitle: "30 首 · 每天 6:00 更新",
-                        badge: nil,
-                        tint: Color(red: 0.30, green: 0.58, blue: 0.82)
-                    )
-                }
-                .pressable()
-
-                NavigationLink {
-                    PlaylistImportView()
-                } label: {
-                    featureCard(
-                        icon: "square.and.arrow.down",
-                        title: "歌单导入",
-                        subtitle: "网易云/QQ 一键搬家",
-                        badge: nil,
-                        tint: Color(white: 0.72)
-                    )
-                }
-                .pressable()
+    /// 真实封面大卡片：每日推荐 / 未来飙升榜（Beans home.jpg 双卡片语言）
+    private var realCoverEntries: some View {
+        HStack(spacing: 12) {
+            NavigationLink {
+                DailyRecommendView()
+            } label: {
+                realCoverCard(
+                    coverURL: dailyCoverURL,
+                    icon: "calendar",
+                    title: "每日推荐",
+                    subtitle: "30 首 · 每天 6:00 更新",
+                    badge: nil
+                )
             }
-            .padding(.horizontal, 16)
+            .pressable()
+
+            NavigationLink {
+                FutureTrendingView()
+            } label: {
+                realCoverCard(
+                    coverURL: trendingCoverURL,
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "未来飙升榜",
+                    subtitle: "AI 预测 7 天热歌",
+                    badge: "AI 预测"
+                )
+            }
+            .pressable()
         }
+        .padding(.horizontal, 16)
     }
 
-    /// 大卡片：图标左上 + 徽章右上 + 底部大标题/副标题
-    private func featureCard(icon: String, title: String, subtitle: String, badge: String?, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                // [Beans#2] 图标去底座化：无圆角底座，直接着白色
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                Spacer()
-                // [修 v4.2 bug] AI 徽章放右上，不压标题
-                if let badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .bold))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(.white.opacity(0.22))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
+    /// 大卡片：真实封面打底 + 底部压暗渐变 + 图标/标题/副标题
+    private func realCoverCard(coverURL: URL?, icon: String, title: String, subtitle: String, badge: String?) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            // 真实封面（无 URL 时深色占位）
+            Group {
+                if let coverURL {
+                    AsyncImage(url: coverURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        default:
+                            Color(white: 0.12)
+                        }
+                    }
+                } else {
+                    Color(white: 0.12)
                 }
             }
-            Spacer()
-            // [修 v4.2 bug] 标题强制单行：告别"未来/飙升/榜"三行挤字
-            Text(title)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Text(subtitle)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.72))
-                .lineLimit(1)
-                .padding(.top, 4)
-        }
-        .padding(16)
-        .frame(width: 172, height: 200)
-        .background(
-            // [impeccable-Quieter] 深色打底 + 低饱和 tint；[impeccable-Refuse] 无紫渐变
+            // 底部压暗，保证白字可读
             LinearGradient(
-                colors: [tint.quieter(0.55).opacity(0.5), Color(white: 0.09)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [.clear, .black.opacity(0.75)],
+                startPoint: .center, endPoint: .bottom
             )
-        )
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    // [Beans#2] 图标去底座化
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                        .shadow(radius: 4)
+                    Spacer()
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 11, weight: .bold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(.white.opacity(0.22))
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                    }
+                }
+                Spacer()
+                Text(title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .shadow(radius: 4)
+                Text(subtitle)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(1)
+                    .padding(.top, 4)
+                    .shadow(radius: 4)
+            }
+            .padding(16)
+        }
+        .frame(height: 200)
+        .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    /// 发现页网易云内容：大卡片真实封面（仅非搜索模式拉取）
+    private func fetchDiscoverContent() {
+        guard !isSearchMode, !isLoadingPlaylists else { return }
+        isLoadingPlaylists = true
+        Task {
+            async let daily = NeteaseDiscoverService.shared.dailyCoverURL()
+            async let trending = NeteaseDiscoverService.shared.trendingCoverURL()
+            do {
+                let (d, t) = try await (daily, trending)
+                await MainActor.run {
+                    dailyCoverURL = d
+                    trendingCoverURL = t
+                    isLoadingPlaylists = false
+                }
+            } catch {
+                await MainActor.run { isLoadingPlaylists = false }
+            }
+        }
     }
 
     private func sectionHeader(_ title: String, count: Int) -> some View {

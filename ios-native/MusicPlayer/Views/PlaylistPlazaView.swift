@@ -1,57 +1,81 @@
 import SwiftUI
 
-// MARK: - PlaylistPlazaView（2026-10-09 Apple 原生风重做）
+// MARK: - PlaylistPlazaView（v4.5 按 Beans discover.jpg 真机重做）
 //
-// 职责：歌单页。
-//   - "我的歌单"：创建歌单（POST /playlists，需登录）；歌单 ID 本地持久化
-//     （后端暂无"我的歌单列表"接口，用本地 ID 列表逐个拉详情补位，失效 ID 自动丢弃）
-//   - 歌单卡片：64pt 圆角封面 + 标题/信息 + chevron，原生列表风
-//   - 新建用原生 sheet + TextField；点卡片 → NavigationLink 进详情
+// 职责：歌单广场（发现 Tab）。
+//   - 顶部：红色 Logo + "搜索歌单"搜索框 + 头像
+//   - 分类 chips：全部 / 推荐歌单 / 精品歌单 / 官方 / 华语 / 欧美（横滑）
+//   - 2 列真实封面卡片：封面图 + 歌单名（标题是歌单名，不是功能名）+ "网易云 · 作者"
+//   - 点卡片 → 拉取曲目 → 网易云源直接播放
+//   - 数据直连 ncm-api（NeteaseDiscoverService），真实封面
+//
+// 工具规则标注：
+// [Beans#内容为王] 2 列大封面三层结构（封面/标题/来源），圆角 18
+// [Beans#chips] 分类胶囊横滑，选中态高亮
+// [impeccable-Typeset] 字号档（15/13）
+// [三铁律①] 按压反馈走 .pressable()
 
 struct PlaylistPlazaView: View {
-    @EnvironmentObject private var music: MusicService
-    @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var player: AudioPlayerManager
-    @EnvironmentObject private var theme: ThemeSettings
 
-    @State private var newTitle = ""
-    @State private var playlists: [OnlinePlaylist] = []
+    @State private var category: NeteaseDiscoverService.PlaylistCategory = .all
+    @State private var playlists: [NeteasePlaylist] = []
     @State private var isLoading = false
-    @State private var isCreating = false
-    @State private var showCreateSheet = false
+    @State private var loadingPlaylistId: Int64?
     @State private var errorMessage: String?
-
-    private let idsKey = "myPlaylistIDs"
 
     var body: some View {
         ZStack(alignment: .top) {
-            AppleTheme.background.ignoresSafeArea()
+            // 深色背景（Beans 壁纸质感用深色渐变代替）
+            LinearGradient(
+                colors: [Color(white: 0.06), Color(white: 0.10), Color(white: 0.07)],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    if !auth.isLoggedIn {
-                        notLoggedInView
-                    } else if isLoading && playlists.isEmpty {
-                        LoadingStateView()
+                    // 顶部：Logo + 搜索框 + 头像
+                    topBar
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 12)
+
+                    // 分类 chips
+                    categoryChips
+                        .padding(.bottom, 14)
+
+                    // 2 列歌单网格
+                    if isLoading && playlists.isEmpty {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .padding(.vertical, 40)
                     } else if playlists.isEmpty {
                         EmptyStateView(
                             icon: "music.note.list",
-                            title: "还没有歌单",
-                            subtitle: "点右上角 + 创建一个吧"
+                            title: "暂无歌单",
+                            subtitle: "下拉刷新试试"
                         )
                     } else {
-                        ForEach(playlists) { playlist in
-                            NavigationLink {
-                                PlaylistDetailScreen(playlistID: playlist.id, title: playlist.title)
-                            } label: {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)
+                            ],
+                            spacing: 18
+                        ) {
+                            ForEach(playlists) { playlist in
                                 playlistCard(playlist)
                             }
-                            .pressable()
-                            Divider().padding(.leading, 88)
                         }
+                        .padding(.horizontal, 16)
                     }
                 }
-                .padding(.bottom, 24)
+                // Beans #22：底部留白躲开悬浮 MiniPlayer + TabBar
+                .padding(.bottom, player.currentTrack != nil ? 170 : 100)
             }
             .refreshable { reload() }
 
@@ -61,217 +85,177 @@ struct PlaylistPlazaView: View {
                     .zIndex(1)
             }
         }
-        .navigationTitle("歌单")
-        .toolbar {
-            if auth.isLoggedIn {
-                Button {
-                    newTitle = ""
-                    showCreateSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .semibold))
-                }
-            }
-        }
-        .sheet(isPresented: $showCreateSheet) {
-            createSheet
-        }
-        .onAppear { reload() }
-        .onChange(of: auth.isLoggedIn) { _ in reload() }
+        .navigationBarHidden(true)
+        .preferredColorScheme(.dark)
+        .task { reload() }
+        .onChange(of: category) { _ in reload() }
     }
 
-    // MARK: - 子视图
+    // MARK: - 顶部栏
 
-    private func playlistCard(_ playlist: OnlinePlaylist) -> some View {
+    /// Logo（红圆）+ 搜索框"搜索歌单" + 头像
+    private var topBar: some View {
         HStack(spacing: 12) {
+            // 红色 Logo
             ZStack {
-                RoundedRectangle(cornerRadius: AppleTheme.artworkRadius)
-                    .fill(theme.accentColor.opacity(0.15))
-                    .frame(width: 64, height: 64)
-                Image(systemName: "music.note.list")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(theme.accentColor)
+                Circle()
+                    .fill(Color(red: 0.92, green: 0.20, blue: 0.16))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "music.note")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(playlist.title)
-                    .font(.body)
-                    .foregroundColor(AppleTheme.label)
-                    .lineLimit(1)
-                Text("\(playlist.trackCount) 首 · \(playlist.creator)")
-                    .font(.body)
-                    .foregroundColor(AppleTheme.secondaryLabel)
-                    .lineLimit(1)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(AppleTheme.tertiaryLabel)
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .contentShape(Rectangle())
-    }
 
-    private var notLoggedInView: some View {
-        EmptyStateView(
-            icon: "music.note.list",
-            title: "登录后创建和管理歌单",
-            subtitle: "游客模式可以先去发现页试听"
-        )
-    }
-
-    private var createSheet: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("歌单名称", text: $newTitle)
-                } footer: {
-                    Text("给你的歌单起个名字")
+            // 搜索框（点进搜索页）
+            NavigationLink {
+                SearchView()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(AppleTheme.secondaryLabel)
+                    Text("搜索歌单")
+                        .font(.body)
+                        .foregroundColor(AppleTheme.secondaryLabel)
+                    Spacer()
                 }
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage).foregroundColor(.red)
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .background(Color.white.opacity(0.10))
+                .clipShape(Capsule())
+            }
+            .pressable()
+
+            // 头像占位
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "person.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+    }
+
+    // MARK: - 分类 chips
+
+    private var categoryChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(NeteaseDiscoverService.PlaylistCategory.allCases, id: \.self) { cat in
+                    let selected = category == cat
+                    Button {
+                        Haptics.tap()
+                        withAnimation(.gsapPower2Out) { category = cat }
+                    } label: {
+                        Text(cat.rawValue)
+                            .font(.system(size: 15, weight: selected ? .semibold : .regular))
+                            .foregroundColor(selected ? .white : .white.opacity(0.65))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                selected
+                                    ? Color.white.opacity(0.22)
+                                    : Color.white.opacity(0.08)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .pressable()
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    // MARK: - 歌单卡片
+
+    /// 封面 + 歌单名 + "网易云 · 作者"（Beans discover.jpg 三层结构）
+    private func playlistCard(_ playlist: NeteasePlaylist) -> some View {
+        Button {
+            playPlaylist(playlist)
+        } label: {
+            VStack(alignment: .leading, spacing: 7) {
+                ZStack {
+                    coverArt(url: playlist.coverURL, size: 400)
+                        .frame(maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    if loadingPlaylistId == playlist.id {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(.black.opacity(0.45))
+                        ProgressView()
+                            .tint(.white)
                     }
                 }
-            }
-            .navigationTitle("新建歌单")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { showCreateSheet = false }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("创建") { create() }
-                        .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                }
+                // 标题 = 歌单名（单行截断）
+                Text(playlist.name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                // 来源行
+                Text("网易云 · \(playlist.creator)")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .presentationDetents([.medium])
+        .pressable()
+        .disabled(loadingPlaylistId != nil)
     }
 
-    // MARK: - 数据（逻辑沿用旧版，仅 UI 重做）
+    // MARK: - 数据
 
     private func reload() {
-        guard auth.isLoggedIn else {
-            playlists = []
-            return
-        }
         isLoading = true
         errorMessage = nil
-        Task {
-            let ids = UserDefaults.standard.stringArray(forKey: idsKey) ?? []
-            var loaded: [OnlinePlaylist] = []
-            var validIDs: [String] = []
-            for id in ids {
-                do {
-                    let detail = try await music.playlistDetail(id: id)
-                    loaded.append(detail.playlist)
-                    validIDs.append(id)
-                } catch {
-                    // 失效的歌单 ID 丢弃，不打断其余加载
-                }
-            }
-            UserDefaults.standard.set(validIDs, forKey: idsKey)
-            await MainActor.run {
-                playlists = loaded
-                isLoading = false
-            }
-        }
-    }
-
-    private func create() {
-        let title = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !title.isEmpty else { return }
-        isCreating = true
-        errorMessage = nil
+        let cat = category
         Task {
             do {
-                let playlist = try await music.createPlaylist(title: title)
-                var ids = UserDefaults.standard.stringArray(forKey: idsKey) ?? []
-                ids.insert(playlist.id, at: 0)
-                UserDefaults.standard.set(ids, forKey: idsKey)
+                let lists = try await NeteaseDiscoverService.shared.playlists(for: cat)
                 await MainActor.run {
-                    playlists.insert(playlist, at: 0)
-                    newTitle = ""
-                    isCreating = false
-                    showCreateSheet = false
+                    // 分类切换后只应用最新请求的结果
+                    if cat == category {
+                        playlists = lists
+                    }
+                    isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "创建失败：\(error.localizedDescription)"
-                    isCreating = false
-                }
-            }
-        }
-    }
-}
-
-// MARK: - 歌单详情
-
-private struct PlaylistDetailScreen: View {
-    let playlistID: String
-    let title: String
-
-    @EnvironmentObject private var music: MusicService
-    @EnvironmentObject private var player: AudioPlayerManager
-
-    @State private var songs: [OnlineSong] = []
-    @State private var isLoading = true
-    @State private var errorMessage: String?
-
-    var body: some View {
-        ZStack(alignment: .top) {
-            AppleTheme.background.ignoresSafeArea()
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    if isLoading {
-                        LoadingStateView()
-                    } else if songs.isEmpty {
-                        EmptyStateView(
-                            icon: "music.note",
-                            title: "歌单是空的",
-                            subtitle: "去发现页加几首吧"
-                        )
-                    } else {
-                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            Button {
-                                player.playOnlineSongs(songs, startAt: idx)
-                            } label: {
-                                SongRow(
-                                    song: song,
-                                    isPlaying: player.currentTrack?.onlineSongId == song.id && player.isPlaying
-                                )
-                            }
-                            .pressable()
-                            .padding(.horizontal, 12)
-                            Divider().padding(.leading, 64)
+                    isLoading = false
+                    errorMessage = "加载失败：\(error.localizedDescription)"
+                    Task {
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        await MainActor.run {
+                            withAnimation(.gsapPower2Out) { errorMessage = nil }
                         }
                     }
                 }
-                .padding(.bottom, 24)
-            }
-            if let errorMessage {
-                ErrorBanner(message: errorMessage)
-                    .padding(.top, 8)
-                    .zIndex(1)
             }
         }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.large)
-        .task { await load() }
     }
 
-    private func load() async {
-        do {
-            let detail = try await music.playlistDetail(id: playlistID)
-            await MainActor.run {
-                songs = detail.songs
-                isLoading = false
-            }
-        } catch {
-            await MainActor.run {
-                errorMessage = "加载失败：\(error.localizedDescription)"
-                isLoading = false
+    /// 点歌单 → 拉取曲目 → 网易云源直接播放
+    private func playPlaylist(_ playlist: NeteasePlaylist) {
+        guard loadingPlaylistId == nil else { return }
+        loadingPlaylistId = playlist.id
+        Haptics.tap()
+        Task {
+            do {
+                let tracks = try await NeteaseDiscoverService.shared.playlistTracks(id: playlist.id)
+                await MainActor.run {
+                    loadingPlaylistId = nil
+                    if !tracks.isEmpty {
+                        player.playPlatformTracks(tracks, startAt: 0)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    loadingPlaylistId = nil
+                    errorMessage = "歌单加载失败：\(error.localizedDescription)"
+                }
             }
         }
     }

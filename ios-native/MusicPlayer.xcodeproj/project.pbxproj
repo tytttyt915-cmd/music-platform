@@ -22,6 +22,8 @@
 		20A7AE34EDA879126EA9518B /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD007029AC770324B353228 /* ProfileView.swift */; };
 		98216C3D7734E473DC860DC8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55527A7EEC0E2F0748F6FAA6 /* SettingsView.swift */; };
 		CA834EDE16EF4E48A5F8247A /* LocalMusicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA45674898A4CB8AC5990D3 /* LocalMusicView.swift */; };
+		E4B2C3D4E5F6000100000023 /* MyPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B2C3D4E5F6000100000024 /* MyPlaylistsView.swift */; };
+		E4B2C3D4E5F6000100000021 /* NeteaseDiscoverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B2C3D4E5F6000100000022 /* NeteaseDiscoverService.swift */; };
 		0C575B90360C45629EA73CD5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8219DE2E83344F66BED38AB6 /* LoginView.swift */; };
 		BB13971DBECE4C6AA3F45044 /* ArtworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 859F7059145547FDAF85F40A /* ArtworkView.swift */; };
 		AB1D1DF011DF4ADC8397C894 /* PlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F901E5C98B3E485DB0665238 /* PlayerBar.swift */; };
@@ -85,6 +87,8 @@
 		FEFF688D71D34DACA91F48E6 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		08364F28A9E34309BDA24E5E /* PlaylistPlazaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistPlazaView.swift; sourceTree = "<group>"; };
 		1BA45674898A4CB8AC5990D3 /* LocalMusicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMusicView.swift; sourceTree = "<group>"; };
+		E4B2C3D4E5F6000100000024 /* MyPlaylistsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPlaylistsView.swift; sourceTree = "<group>"; };
+		E4B2C3D4E5F6000100000022 /* NeteaseDiscoverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeteaseDiscoverService.swift; sourceTree = "<group>"; };
 		D2F45DCACB63475D864797A5 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		DE2260C246C7437680D4B7C5 /* MiniPlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerBar.swift; sourceTree = "<group>"; };
 		BE62DF4CC9B6443B97A62B07 /* FullPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullPlayerView.swift; sourceTree = "<group>"; };
@@ -211,6 +215,7 @@
 				FEFF688D71D34DACA91F48E6 /* DiscoverView.swift */,
 				08364F28A9E34309BDA24E5E /* PlaylistPlazaView.swift */,
 				1BA45674898A4CB8AC5990D3 /* LocalMusicView.swift */,
+				E4B2C3D4E5F6000100000024 /* MyPlaylistsView.swift */,
 				D2F45DCACB63475D864797A5 /* ProfileView.swift */,
 				DE2260C246C7437680D4B7C5 /* MiniPlayerBar.swift */,
 				BE62DF4CC9B6443B97A62B07 /* FullPlayerView.swift */,
@@ -258,6 +263,7 @@
 				C1B2C3D4E5F6000100000018 /* MusicService.swift */,
 				F70F1817157046758462031F /* APIClient.swift */,
 				A1B2C3D4E5F60001000000A2 /* AuthService.swift */,
+				E4B2C3D4E5F6000100000022 /* NeteaseDiscoverService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -340,6 +346,7 @@
 				B1B2C3D4E5F6000100000010 /* ArtworkView.swift in Sources */,
 				B1B2C3D4E5F6000100000011 /* PlayerBar.swift in Sources */,
 				B1B2C3D4E5F6000100000016 /* MusicService.swift in Sources */,
+				E4B2C3D4E5F6000100000021 /* NeteaseDiscoverService.swift in Sources */,
 			
 				BAE2BAEAD692DB793E63CF9A /* DiscoverView.swift in Sources */,
 				0570F4D0116608FF49602363 /* PlaylistPlazaView.swift in Sources */,
@@ -348,6 +355,7 @@
 				20A7AE34EDA879126EA9518B /* ProfileView.swift in Sources */,
 				98216C3D7734E473DC860DC8 /* SettingsView.swift in Sources */,
 				CA834EDE16EF4E48A5F8247A /* LocalMusicView.swift in Sources */,
+				E4B2C3D4E5F6000100000023 /* MyPlaylistsView.swift in Sources */,
 				0C575B90360C45629EA73CD5 /* LoginView.swift in Sources */,
 				BB13971DBECE4C6AA3F45044 /* ArtworkView.swift in Sources */,
 				AB1D1DF011DF4ADC8397C894 /* PlayerBar.swift in Sources */,
