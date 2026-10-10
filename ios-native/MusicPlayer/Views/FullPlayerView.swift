@@ -178,7 +178,7 @@ struct FullPlayerView: View {
     private var controlBar: some View {
         HStack(spacing: 0) {
             Spacer()
-            Button { player.previous() } label: {
+            Button { Haptics.tap(); player.previous() } label: {
                 Image(systemName: "backward.fill")
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundColor(AppleTheme.label)
@@ -187,7 +187,7 @@ struct FullPlayerView: View {
             }
             .pressable()
             Spacer()
-            Button { player.togglePlayPause() } label: {
+            Button { Haptics.tap(); player.togglePlayPause() } label: {
                 MorphPlayIcon(isPlaying: player.isPlaying, size: 40)
                     .foregroundColor(AppleTheme.label)
                     .frame(width: 72, height: 72)
@@ -196,7 +196,7 @@ struct FullPlayerView: View {
             .pressable()
             .clickSpark(color: pageAccent.opacity(0.9))
             Spacer()
-            Button { player.next() } label: {
+            Button { Haptics.tap(); player.next() } label: {
                 Image(systemName: "forward.fill")
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundColor(AppleTheme.label)

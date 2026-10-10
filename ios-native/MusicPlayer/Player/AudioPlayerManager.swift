@@ -205,13 +205,13 @@ class AudioPlayerManager: ObservableObject {
         }
     }
     
+    /// 锁屏 / 灵动岛同步（v4.2：经 LiveActivityManager）
     private func updateNowPlaying() {
-        guard let track = currentTrack else { return }
-        var info: [String: Any] = [
-            MPMediaItemPropertyTitle: track.title,
-            MPMediaItemPropertyArtist: track.artist,
-            MPMediaItemPropertyAlbumTitle: track.album,
-        ]
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        LiveActivityManager.shared.sync(
+            track: currentTrack,
+            isPlaying: isPlaying,
+            currentTime: currentTime,
+            duration: duration
+        )
     }
 }

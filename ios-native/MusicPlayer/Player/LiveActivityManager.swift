@@ -116,17 +116,20 @@ final class LiveActivityManager {
     private func startLiveActivity(track: Track, state: NowPlayingActivityAttributes.ContentState) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
-        // 没有 Widget Extension 时系统无处渲染，直接跳过（不抛错）
-        guard Activity<NowPlayingActivityAttributes>.activities.isEmpty else { return }
         let attributes = NowPlayingActivityAttributes(songId: track.id)
         do {
+            // 先清掉可能残留的旧 activity，避免快速切歌时叠加
+            for activity in Activity<NowPlayingActivityAttributes>.activities {
+                Task { await activity.end(nil, dismissalPolicy: .immediate) }
+            }
             currentActivity = try Activity.request(
                 attributes: attributes,
                 content: ActivityContent(state: state, staleDate: nil),
                 pushType: nil
             )
         } catch {
-            // 无 extension / 被拒绝都不影响播放，静默
+            // 无 Widget Extension / 被拒绝都不影响播放，静默
+            currentActivity = nil
         }
         #endif
     }

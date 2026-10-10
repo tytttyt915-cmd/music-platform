@@ -54,6 +54,7 @@
 		C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */ = {isa = PBXBuildFile; fileRef = D825FA5A785DD68987F78D60 /* ClickSpark.swift */; };
 		A1B2C3D4E5F60718293A4B5C /* MorphPlayIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */; };
 		C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */; };
+		E5F60718293A4B5C6D7E8F90 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60718293A4B5C6D7E8F90A1 /* Haptics.swift */; };
 		D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */; };
 		E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DD894334F7A35167264BE6 /* RadioView.swift */; };
 		12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */; };
@@ -116,6 +117,7 @@
 		D825FA5A785DD68987F78D60 /* ClickSpark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/ClickSpark.swift; sourceTree = "<group>"; };
 		B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/MorphPlayIcon.swift; sourceTree = "<group>"; };
 		D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/MiniLyricProvider.swift; sourceTree = "<group>"; };
+		F60718293A4B5C6D7E8F90A1 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/Haptics.swift; sourceTree = "<group>"; };
 		C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SourceSwitchView.swift; sourceTree = "<group>"; };
 		29DD894334F7A35167264BE6 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 		95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/WaveformProgressView.swift; sourceTree = "<group>"; };
@@ -225,6 +227,7 @@
 				D825FA5A785DD68987F78D60 /* ClickSpark.swift */,
 				B2C3D4E5F60718293A4B5C6D /* MorphPlayIcon.swift */,
 				D4E5F60718293A4B5C6D7E8F /* MiniLyricProvider.swift */,
+				F60718293A4B5C6D7E8F90A1 /* Haptics.swift */,
 				C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */,
 				29DD894334F7A35167264BE6 /* RadioView.swift */,
 				95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */,
@@ -368,6 +371,7 @@
 				C60ED50FBFC46A7021C380EB /* ClickSpark.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* MorphPlayIcon.swift in Sources */,
 				C3D4E5F60718293A4B5C6D7E /* MiniLyricProvider.swift in Sources */,
+				E5F60718293A4B5C6D7E8F90 /* Haptics.swift in Sources */,
 				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */,
 				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */,
 				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */,

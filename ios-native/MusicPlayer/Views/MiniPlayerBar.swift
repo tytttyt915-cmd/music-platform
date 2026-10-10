@@ -43,7 +43,7 @@ struct MiniPlayerBar: View {
                         .padding(.trailing, 2)
                 }
                 Button {
-                    player.togglePlayPause()
+                    Haptics.tap(); player.togglePlayPause()
                 } label: {
                     MorphPlayIcon(isPlaying: player.isPlaying, size: 16)
                         .foregroundColor(AppleTheme.label)
