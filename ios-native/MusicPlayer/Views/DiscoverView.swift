@@ -8,6 +8,14 @@ import SwiftUI
 //   - 分页：到底自动加载（hasMore）；下拉刷新
 //   - 错误用顶部浮条提示，3 秒自动消失
 
+/// 发现页壁纸选项（设置 → 外观与界面 → 动态壁纸 → 发现页背景）
+enum DiscoverWallpaper: String, CaseIterable {
+    case system = "跟随系统"
+    case darkSpace = "深空渐变"
+    case inkBlue = "墨蓝渐变"
+    case ember = "暗夜红"
+}
+
 struct DiscoverView: View {
     @EnvironmentObject private var music: MusicService
     @EnvironmentObject private var player: AudioPlayerManager
@@ -25,6 +33,11 @@ struct DiscoverView: View {
     @State private var sourceSwitchSong: OnlineSong?
     // Beans 风格：平台分段器选中态（nil = 全部）
     @State private var selectedPlatform: String?
+
+    /// 发现页壁纸（设置 → 外观与界面 → 动态壁纸 → 发现页背景；默认深色渐变）
+    /// impeccable Quieter：深色打底 + 低饱和，壁纸是氛围不是主角
+    @AppStorage("settings.discover.wallpaper") private var wallpaperRaw = DiscoverWallpaper.darkSpace.rawValue
+    private var wallpaper: DiscoverWallpaper { DiscoverWallpaper(rawValue: wallpaperRaw) ?? .darkSpace }
 
     private var isSearchMode: Bool { !keyword.trimmingCharacters(in: .whitespaces).isEmpty }
 
@@ -69,9 +82,33 @@ struct DiscoverView: View {
         enabledPlatforms.filter { PlatformTrack.paidPlatforms.contains($0) }
     }
 
+    /// 壁纸背景：默认深空渐变；跟随系统时用 AppleTheme.background
+    @ViewBuilder
+    private var discoverBackground: some View {
+        switch wallpaper {
+        case .system:
+            AppleTheme.background.ignoresSafeArea()
+        case .darkSpace:
+            LinearGradient(
+                colors: [Color(white: 0.05), Color(white: 0.11), Color(white: 0.07)],
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        case .inkBlue:
+            LinearGradient(
+                colors: [Color(red: 0.04, green: 0.09, blue: 0.16), Color(red: 0.03, green: 0.06, blue: 0.12)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            ).ignoresSafeArea()
+        case .ember:
+            LinearGradient(
+                colors: [Color(red: 0.14, green: 0.05, blue: 0.05), Color(red: 0.07, green: 0.04, blue: 0.04)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            ).ignoresSafeArea()
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            AppleTheme.background.ignoresSafeArea()
+            discoverBackground
 
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -82,10 +119,9 @@ struct DiscoverView: View {
                             .padding(.top, 8)
                             .padding(.bottom, 12)
                     }
-                    // v4.2 功能入口（仅非搜索模式）：未来飙升榜 / 歌单导入
+                    // v4.3 功能卡片（仅非搜索模式）：未来飙升榜 / 每日推荐 / 歌单导入
                     if !isSearchMode {
                         featureEntries
-                            .padding(.horizontal, 12)
                             .padding(.bottom, 12)
                     }
                     // Beans 风格：热搜胶囊（仅非搜索模式）
@@ -227,6 +263,8 @@ struct DiscoverView: View {
             if newValue.isEmpty { reload() }
         }
         .task { reload() }
+        // 壁纸为深色渐变时强制深色模式，保证文字对比度（craft floor 对比度 4.5:1）
+        .preferredColorScheme(wallpaper == .system ? nil : .dark)
     }
 
     // MARK: - 数据
@@ -345,76 +383,108 @@ struct DiscoverView: View {
         .pressable()
     }
 
-    // MARK: - v4.2 功能入口
+    // MARK: - v4.3 功能卡片（Beans home.jpg 双卡片语言重做）
+    //
+    // 工具规则标注：
+    // [Beans#1] 大卡片三层结构：图标左上 + 大标题 + 副标题，圆角 20pt
+    // [Beans#2] 图标去底座化：线性图标直接着色，无 40×40 圆角底座
+    // [Beans#7] 颜色即信息：三卡各一色（主题红/墨蓝/中性灰）
+    // [impeccable-Quieter] 渐变饱和度压到 70-85%，深色打底
+    // [impeccable-Typeset] 字号 5 档内（20/13/11 + 系统标题档）
+    // [impeccable-Refuse] 禁用紫色渐变（Beans 私人漫游的设计债，不抄）
+    // [三铁律①] 按压反馈走 .pressable()
 
-    /// 未来飙升榜 / 歌单导入：横向双卡片
+    /// 功能卡片：横滑三卡（未来飙升榜 / 每日推荐 / 歌单导入）
     private var featureEntries: some View {
-        HStack(spacing: 12) {
-            NavigationLink {
-                FutureTrendingView()
-            } label: {
-                featureCard(
-                    icon: "chart.line.uptrend.xyaxis",
-                    title: "未来飙升榜",
-                    subtitle: "AI 预测 7 天热歌",
-                    badge: "AI 预测"
-                )
-            }
-            .pressable()
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                NavigationLink {
+                    FutureTrendingView()
+                } label: {
+                    featureCard(
+                        icon: "chart.line.uptrend.xyaxis",
+                        title: "未来飙升榜",
+                        subtitle: "AI 预测 7 天热歌",
+                        badge: "AI 预测",
+                        tint: theme.accentColor
+                    )
+                }
+                .pressable()
 
-            NavigationLink {
-                PlaylistImportView()
-            } label: {
-                featureCard(
-                    icon: "square.and.arrow.down.on.square",
-                    title: "歌单导入",
-                    subtitle: "网易云/QQ 一键搬家",
-                    badge: nil
-                )
+                NavigationLink {
+                    DailyRecommendView()
+                } label: {
+                    featureCard(
+                        icon: "calendar",
+                        title: "每日推荐",
+                        subtitle: "30 首 · 每天 6:00 更新",
+                        badge: nil,
+                        tint: Color(red: 0.30, green: 0.58, blue: 0.82)
+                    )
+                }
+                .pressable()
+
+                NavigationLink {
+                    PlaylistImportView()
+                } label: {
+                    featureCard(
+                        icon: "square.and.arrow.down",
+                        title: "歌单导入",
+                        subtitle: "网易云/QQ 一键搬家",
+                        badge: nil,
+                        tint: Color(white: 0.72)
+                    )
+                }
+                .pressable()
             }
-            .pressable()
+            .padding(.horizontal, 16)
         }
     }
 
-    private func featureCard(icon: String, title: String, subtitle: String, badge: String?) -> some View {
-        HStack(spacing: 10) {
-            // impeccable: 去掉 icon-tile（40×40 圆角瓦片是最高频 AI tell），
-            // SF Symbol 直接着主题色，图标本身就是视觉锚
-            Image(systemName: icon)
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(theme.accentColor)
-                .frame(width: 28, height: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .foregroundColor(AppleTheme.label)
-                    if let badge {
-                        Text(badge)
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(theme.accentColor.opacity(0.15))
-                            .foregroundColor(theme.accentColor)
-                            .clipShape(Capsule())
-                    }
+    /// 大卡片：图标左上 + 徽章右上 + 底部大标题/副标题
+    private func featureCard(icon: String, title: String, subtitle: String, badge: String?, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                // [Beans#2] 图标去底座化：无圆角底座，直接着白色
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                // [修 v4.2 bug] AI 徽章放右上，不压标题
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 11, weight: .bold))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.white.opacity(0.22))
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
                 }
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(AppleTheme.secondaryLabel)
-                    .lineLimit(1)
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(AppleTheme.tertiaryLabel)
+            // [修 v4.2 bug] 标题强制单行：告别"未来/飙升/榜"三行挤字
+            Text(title)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(subtitle)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.72))
+                .lineLimit(1)
+                .padding(.top, 4)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .liquidGlassLight(cornerRadius: 16)
+        .padding(16)
+        .frame(width: 172, height: 200)
+        .background(
+            // [impeccable-Quieter] 深色打底 + 低饱和 tint；[impeccable-Refuse] 无紫渐变
+            LinearGradient(
+                colors: [tint.quieter(0.55).opacity(0.5), Color(white: 0.09)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func sectionHeader(_ title: String, count: Int) -> some View {

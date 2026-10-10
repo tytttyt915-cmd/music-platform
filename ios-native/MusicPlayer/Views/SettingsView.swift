@@ -430,10 +430,25 @@ private struct ThemeModePickerView: View {
 
 private struct WallpaperSettingsView: View {
     @AppStorage("settings.wallpaper.enabled") private var enabled = false
+    // v4.3：发现页背景（默认深空渐变）
+    @AppStorage("settings.discover.wallpaper") private var discoverWallpaper = DiscoverWallpaper.darkSpace.rawValue
+    private let discoverOptions: [DiscoverWallpaper] = [.system, .darkSpace, .inkBlue, .ember]
 
     var body: some View {
         VStack(spacing: 2) {
             InlineToggleRow(title: "开启动态壁纸", subtitle: "播放页背景跟随封面流动", isOn: $enabled)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("发现页背景")
+                    .font(.body)
+                    .foregroundColor(AppleTheme.label)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                ForEach(discoverOptions, id: \.rawValue) { option in
+                    InlineOptionRow(title: option.rawValue, selected: discoverWallpaper == option.rawValue) {
+                        discoverWallpaper = option.rawValue
+                    }
+                }
+            }
         }
     }
 }
