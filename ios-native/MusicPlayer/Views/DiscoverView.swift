@@ -11,6 +11,7 @@ import SwiftUI
 struct DiscoverView: View {
     @EnvironmentObject private var music: MusicService
     @EnvironmentObject private var player: AudioPlayerManager
+    @EnvironmentObject private var theme: ThemeSettings
 
     @State private var keyword = ""
     @State private var songs: [OnlineSong] = []
@@ -47,6 +48,13 @@ struct DiscoverView: View {
 
             ScrollView {
                 LazyVStack(spacing: 0) {
+                    // v4.2 功能入口（仅非搜索模式）：未来飙升榜 / 歌单导入
+                    if !isSearchMode {
+                        featureEntries
+                            .padding(.horizontal, 12)
+                            .padding(.top, 4)
+                            .padding(.bottom, 8)
+                    }
                     if isLoading && songs.isEmpty && platformSongs.isEmpty {
                         LoadingStateView()
                     } else if songs.isEmpty && platformSongs.isEmpty {
@@ -176,6 +184,78 @@ struct DiscoverView: View {
         guard hasMore, !isLoading else { return }
         page += 1
         fetch()
+    }
+
+    // MARK: - v4.2 功能入口
+
+    /// 未来飙升榜 / 歌单导入：横向双卡片
+    private var featureEntries: some View {
+        HStack(spacing: 12) {
+            NavigationLink {
+                FutureTrendingView()
+            } label: {
+                featureCard(
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "未来飙升榜",
+                    subtitle: "AI 预测 7 天热歌",
+                    badge: "AI 预测"
+                )
+            }
+            .pressable()
+
+            NavigationLink {
+                PlaylistImportView()
+            } label: {
+                featureCard(
+                    icon: "square.and.arrow.down.on.square",
+                    title: "歌单导入",
+                    subtitle: "网易云/QQ 一键搬家",
+                    badge: nil
+                )
+            }
+            .pressable()
+        }
+    }
+
+    private func featureCard(icon: String, title: String, subtitle: String, badge: String?) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(theme.accentColor)
+                .frame(width: 40, height: 40)
+                .background(theme.accentColor.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppleTheme.label)
+                    if let badge {
+                        Text(badge)
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(theme.accentColor.opacity(0.15))
+                            .foregroundColor(theme.accentColor)
+                            .clipShape(Capsule())
+                    }
+                }
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(AppleTheme.secondaryLabel)
+                    .lineLimit(1)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(AppleTheme.tertiaryLabel)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .liquidGlassLight(cornerRadius: 16)
     }
 
     private func sectionHeader(_ title: String, count: Int) -> some View {

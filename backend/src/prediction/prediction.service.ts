@@ -12,6 +12,10 @@ export interface TrackPrediction {
   predicted7d: number;
   /** 逐日预测值 */
   forecast: number[];
+  /** 0.7 分位数未来 7 天和（乐观预测，用于"未来飙升榜"排序）；无分位数时为 null */
+  quantile07d: number | null;
+  /** 最近 7 天实际播放量（用于算趋势） */
+  recent7d: number;
   /** 参与预测的历史天数 */
   historyDays: number;
   /** 是否走了降级（TimesFM 不可用） */
@@ -188,10 +192,27 @@ export class PredictionService {
       Math.max(0, Math.round(v * 100) / 100),
     );
     const predicted7d = Math.round(forecast.reduce((a, b) => a + b, 0));
+    // 0.7 分位数（乐观预测）："未来飙升榜"按此排序，专挑有爆发潜力的歌。
+    // TimesFM 的 quantiles 形如 {"0.1": [...], "0.5": [...], "0.9": [...]}；
+    // 若模型没返回分位数则为 null，调用方回退到 predicted7d。
+    let quantile07d: number | null = null;
+    const q07 = resp.quantiles?.['0.7'];
+    if (Array.isArray(q07) && q07.length > 0) {
+      quantile07d = Math.round(
+        q07
+          .slice(0, HORIZON)
+          .reduce((a: number, b: number) => a + Math.max(0, b), 0),
+      );
+    }
+    const recent7d = Math.round(
+      history.slice(-7).reduce((a, b) => a + b, 0),
+    );
     const result: TrackPrediction = {
       trackId,
       predicted7d,
       forecast,
+      quantile07d,
+      recent7d,
       historyDays: history.length,
       fallback: false,
       inferenceMs:

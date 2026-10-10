@@ -37,6 +37,16 @@ export interface PageResult<T> {
   pageSize: number;
 }
 
+/** 未来飙升榜单首预测视图（给 App 的轻量字段）。 */
+export interface FuturePredictionView {
+  /** 未来 7 天预测播放量；降级时为 null */
+  predicted7d: number | null;
+  /** 趋势：(预测7天 - 最近7天实际)/最近7天实际；>0.1 为上升；降级时为 null */
+  trendPct: number | null;
+  /** 是否走了 TimesFM 真预测（false = 按播放量降级排序） */
+  isPredicted: boolean;
+}
+
 const PLAY_KEY = (userId: string, trackId: string, day: string) =>
   `play:${userId}:${trackId}:${day}`;
 
@@ -140,6 +150,95 @@ export class MusicService {
       .slice(start, start + pageSize)
       .map((s) => s.track);
     return { list, total, page, pageSize };
+  }
+
+  /**
+   * 未来飙升榜（供 GET /music/trending-future）。
+   *
+   * 排序键：0.7 分位数未来 7 天和（乐观预测）→ predicted7d → 累计 playCount。
+   * TimesFM 不可用时整体降级为按 playCount 排序（fallback=true），接口不 500。
+   * 注意：TimesFM 默认跑在助手宿主机 127.0.0.1:8100，腾讯云后端连不上；
+   * 生产把 TIMESFM_URL 指向公网可达的预测服务即可自动切真实预测。
+   */
+  async trendingFuture(
+    page: number,
+    pageSize: number,
+  ): Promise<
+    PageResult<Track> & {
+      predictions: Record<string, FuturePredictionView>;
+      fallback: boolean;
+      predictedAt: string;
+    }
+  > {
+    const candidates = await this.tracksRepo.find({
+      where: { status: TRACK_STATUS_ONLINE },
+      order: { playCount: 'DESC', id: 'ASC' },
+      take: this.prediction.maxCandidates,
+    });
+    const total = await this.tracksRepo.count({
+      where: { status: TRACK_STATUS_ONLINE },
+    });
+    if (candidates.length === 0) {
+      return {
+        list: [],
+        total,
+        page,
+        pageSize,
+        predictions: {},
+        fallback: true,
+        predictedAt: new Date().toISOString(),
+      };
+    }
+    const preds = await this.prediction.predictBatch(
+      candidates.map((t) => t.id),
+    );
+    let anyPredicted = false;
+    const scored = candidates.map((t) => {
+      const p = preds.get(t.id) ?? null;
+      const playCount = parseInt(t.playCount ?? '0', 10) || 0;
+      const ok = !!p && !p.fallback;
+      if (ok) anyPredicted = true;
+      // 0.7 分位数优先：专挑"未来 7 天可能爆发"的歌，这就是"飙升"
+      const score = ok
+        ? (p!.quantile07d ?? p!.predicted7d)
+        : playCount;
+      const recent7d = p?.recent7d ?? 0;
+      const predicted7d = p?.predicted7d ?? null;
+      // 趋势：预测 7 天 vs 最近 7 天实际，>10% 算上升
+      const trendPct =
+        ok && predicted7d !== null
+          ? recent7d > 0
+            ? (predicted7d - recent7d) / recent7d
+            : predicted7d > 0
+              ? 1
+              : 0
+          : null;
+      return { track: t, score, trendPct, predicted7d, ok };
+    });
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.track.id.localeCompare(b.track.id);
+    });
+    const start = (page - 1) * pageSize;
+    const slice = scored.slice(start, start + pageSize);
+    const predictions: Record<string, FuturePredictionView> = {};
+    for (const s of slice) {
+      predictions[s.track.id] = {
+        predicted7d: s.predicted7d,
+        trendPct:
+          s.trendPct === null ? null : Math.round(s.trendPct * 1000) / 1000,
+        isPredicted: s.ok,
+      };
+    }
+    return {
+      list: slice.map((s) => s.track),
+      total,
+      page,
+      pageSize,
+      predictions,
+      fallback: !anyPredicted,
+      predictedAt: new Date().toISOString(),
+    };
   }
 
   /** 单首歌热度预测（供 /music/track/:id/predict）。 */

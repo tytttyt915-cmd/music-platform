@@ -84,6 +84,36 @@ final class MusicService: ObservableObject {
         return dto.toPagedResult()
     }
 
+    // MARK: - 未来飙升榜（TimesFM 智能预测）
+
+    /// 未来飙升榜：后端用 TimesFM 预测 7 天后热度，按 0.7 分位数排序。
+    /// TimesFM 不可用时后端降级为按播放量排序（fallback=true），App 照常展示。
+    func trendingFuture(page: Int = 1, pageSize: Int = 20) async throws -> TrendingFutureResult {
+        let dto: TrendingFutureDTO = try await api.get(
+            "/music/trending-future",
+            query: ["page": "\(page)", "pageSize": "\(pageSize)"]
+        )
+        return dto.toResult()
+    }
+
+    // MARK: - 歌单导入（一键搬家）
+
+    /// 歌单导入：粘贴网易云/ QQ 音乐歌单链接，后端爬取 + 本地匹配 + 建单。
+    /// 返回搬家报告（命中/未命中列表）。需要登录（游客 token 亦可）。
+    func importPlaylist(url: String) async throws -> PlaylistImportReport {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw APIError.business(code: -1, message: "请粘贴歌单链接")
+        }
+        struct Body: Encodable { let url: String }
+        let dto: PlaylistImportDTO = try await api.post(
+            "/playlists/import",
+            body: Body(url: trimmed),
+            requiresAuth: true
+        )
+        return dto.toReport()
+    }
+
     // MARK: - 歌曲详情与歌词
 
     /// 歌曲详情
@@ -381,6 +411,67 @@ private struct PlatformSourceDTO: Decodable {
             durationMs: durationMs
         )
     }
+}
+
+/// 未来飙升榜响应
+private struct TrendingFutureDTO: Decodable {
+    let list: [TrackDTO]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+    let predictions: [String: FuturePredictionDTO]?
+    let fallback: Bool?
+
+    func toResult() -> TrendingFutureResult {
+        let items = list.map { dto -> TrendingSong in
+            let pred = predictions?[dto.id]
+            return TrendingSong(
+                song: dto.toModel(),
+                predicted7d: pred?.predicted7d,
+                trendPct: pred?.trendPct,
+                isPredicted: pred?.isPredicted ?? false
+            )
+        }
+        return TrendingFutureResult(
+            items: items,
+            total: total,
+            page: page,
+            pageSize: pageSize,
+            fallback: fallback ?? true
+        )
+    }
+}
+
+private struct FuturePredictionDTO: Decodable {
+    let predicted7d: Int?
+    let trendPct: Double?
+    let isPredicted: Bool?
+}
+
+/// 歌单导入搬家报告响应
+private struct PlaylistImportDTO: Decodable {
+    let playlistId: String
+    let playlistName: String
+    let total: Int
+    let matched: Int
+    let unmatched: [ImportUnmatchedDTO]?
+
+    func toReport() -> PlaylistImportReport {
+        PlaylistImportReport(
+            playlistId: playlistId,
+            playlistName: playlistName,
+            total: total,
+            matched: matched,
+            unmatched: (unmatched ?? []).map {
+                ImportUnmatchedSong(title: $0.title, artist: $0.artist)
+            }
+        )
+    }
+}
+
+private struct ImportUnmatchedDTO: Decodable {
+    let title: String
+    let artist: String
 }
 
 private struct RadioStationDTO: Decodable {

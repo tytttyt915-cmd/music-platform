@@ -93,8 +93,10 @@ struct PressScaleStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1.0)
-            .opacity(configuration.isPressed ? 0.85 : 1.0)
-            .animation(.appleSnappy, value: configuration.isPressed)
+            // Beans-Music 对标：brightness 双通道比 opacity 更"物理"（opacity 0.85 显廉价）
+            // spring(response: 0.24, dampingFraction: 0.82) 来自 Beans GlassPressButtonStyle
+            .brightness(configuration.isPressed ? 0.025 : 0)
+            .animation(.spring(response: 0.24, dampingFraction: 0.82), value: configuration.isPressed)
     }
 }
 

@@ -38,22 +38,41 @@ export class MusicController {
     return this.musicService.search(query.q.trim(), query.page, query.pageSize);
   }
 
+  /**
+   * 未来飙升榜：TimesFM 预测 7 天后热度，按 0.7 分位数（乐观预测）排序。
+   * TimesFM 不可用时降级为按累计播放量排序（fallback=true），不 500。
+   * ?page=1&pageSize=20
+   */
+  @Public()
+  @Get('trending-future')
+  trendingFuture(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const ps = pageSize ? parseInt(pageSize, 10) : 20;
+    return this.musicService.trendingFuture(
+      Number.isNaN(p) || p < 1 ? 1 : p,
+      Number.isNaN(ps) || ps < 1 ? 20 : Math.min(ps, 100),
+    );
+  }
+
   @Public()
   @Get('track/:id')
-  track(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  track(@Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string) {
     return this.musicService.getTrack(id);
   }
 
   @Public()
   @Get('track/:id/lyrics')
-  lyrics(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  lyrics(@Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string) {
     return this.musicService.getLyrics(id);
   }
 
   /** 单首歌未来 7 天热度预测（TimesFM；不可用时降级）。 */
   @Public()
   @Get('track/:id/predict')
-  predict(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  predict(@Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string) {
     return this.musicService.predictTrack(id);
   }
 
@@ -63,7 +82,7 @@ export class MusicController {
    */
   @Public()
   @Get('track/:id/sources')
-  sources(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  sources(@Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string) {
     return this.musicService.getAvailableSources(id);
   }
 
@@ -75,7 +94,7 @@ export class MusicController {
   @Put('track/:id/preferred-source')
   @HttpCode(200)
   setPreferredSource(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string,
     @Body() body: { source?: string },
   ) {
     return this.musicService.setPreferredSource(id, body?.source ?? 'auto');
@@ -97,7 +116,7 @@ export class MusicController {
    */
   @Public()
   @Get('track/:id/waveform')
-  waveform(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  waveform(@Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string) {
     return this.musicService.getWaveform(id);
   }
 
@@ -108,7 +127,7 @@ export class MusicController {
   @Public()
   @Get('track/:id/stream')
   async stream(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string,
     @Query() query: StreamQueryDto,
     @Res() res: Response,
   ) {
@@ -186,7 +205,7 @@ export class MusicController {
   @Post('track/:id/play')
   @HttpCode(200)
   play(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4', optional: true })) id: string,
     @CurrentUser() user: AuthUser,
     @Req() req: Request,
     @Body() body: { quality?: string },

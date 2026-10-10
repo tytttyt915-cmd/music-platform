@@ -62,6 +62,70 @@ struct LyricLine: Identifiable {
     let text: String
 }
 
+// MARK: - 未来飙升榜（TimesFM 智能预测）
+
+/// 飙升榜单首：歌曲 + 预测信息
+struct TrendingSong: Identifiable, Hashable {
+    let song: OnlineSong
+    /// 未来 7 天预测播放量；降级时为 nil
+    let predicted7d: Int?
+    /// 趋势：(预测7天 - 最近7天实际)/最近7天实际；nil = 未知
+    let trendPct: Double?
+    /// 是否走了 TimesFM 真预测
+    let isPredicted: Bool
+
+    var id: String { song.id }
+
+    /// 上升幅度文案，如 "↑35%"；不上升返回 nil
+    var risingText: String? {
+        guard let p = trendPct, p > 0.1 else { return nil }
+        return "↑\(Int((p * 100).rounded()))%"
+    }
+
+    static func == (lhs: TrendingSong, rhs: TrendingSong) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+/// 飙升榜结果
+struct TrendingFutureResult {
+    let items: [TrendingSong]
+    let total: Int
+    let page: Int
+    let pageSize: Int
+    /// true = 后端降级为按播放量排序（TimesFM 不可用）
+    let fallback: Bool
+
+    var hasMore: Bool {
+        items.count + (page - 1) * pageSize < total
+    }
+}
+
+// MARK: - 歌单导入（一键搬家）
+
+/// 歌单导入搬家报告
+struct PlaylistImportReport {
+    let playlistId: String
+    let playlistName: String
+    let total: Int
+    let matched: Int
+    let unmatched: [ImportUnmatchedSong]
+
+    var matchedRate: Double {
+        total > 0 ? Double(matched) / Double(total) : 0
+    }
+}
+
+struct ImportUnmatchedSong: Identifiable, Hashable {
+    let title: String
+    let artist: String
+    var id: String { "\(title)-\(artist)" }
+}
+
 /// 分页结果（后端 feed/search 的 { list, total, page, pageSize }）
 struct PagedResult<Item> {
     let items: [Item]
