@@ -9,11 +9,21 @@ import SwiftUI
 //   - 错误用顶部浮条提示，3 秒自动消失
 
 /// 发现页壁纸选项（设置 → 外观与界面 → 动态壁纸 → 发现页背景）
+///
+/// [Beans#3 用户即背景]：Beans 没有"设计背景"，直接用用户自己的壁纸 + 模糊。
+/// iOS 取不到系统壁纸，所以给"自选图片"：用户从相册选一张，App 做模糊 + 压暗。
 enum DiscoverWallpaper: String, CaseIterable {
     case system = "跟随系统"
     case darkSpace = "深空渐变"
     case inkBlue = "墨蓝渐变"
     case ember = "暗夜红"
+    case custom = "自选图片"
+
+    /// 自选壁纸存 Documents/wallpaper.jpg（AppStorage 存不下图片）
+    static var customImageURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("wallpaper.jpg")
+    }
 }
 
 struct DiscoverView: View {
@@ -34,6 +44,9 @@ struct DiscoverView: View {
     // 网易云真实内容（直连 ncm-api：大卡片真实封面）
     @State private var dailyCoverURL: URL?
     @State private var trendingCoverURL: URL?
+    @State private var roamCoverURL: URL?
+    @State private var hotChartCoverURL: URL?
+    @State private var newChartCoverURL: URL?
     @State private var isLoadingPlaylists = false
     // Beans 风格：平台分段器选中态（nil = 全部）
     @State private var selectedPlatform: String?
@@ -107,6 +120,25 @@ struct DiscoverView: View {
                 colors: [Color(red: 0.14, green: 0.05, blue: 0.05), Color(red: 0.07, green: 0.04, blue: 0.04)],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             ).ignoresSafeArea()
+        case .custom:
+            // [Beans#3] 用户自选图片：模糊 + 压暗，保证文字可读
+            Group {
+                if let data = try? Data(contentsOf: DiscoverWallpaper.customImageURL),
+                   let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .blur(radius: 30)
+                        .overlay(.black.opacity(0.55))
+                } else {
+                    // 没选图时回退深空渐变（不撒谎：不是"自选"失败，是还没选）
+                    LinearGradient(
+                        colors: [Color(white: 0.05), Color(white: 0.11), Color(white: 0.07)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                }
+            }
+            .ignoresSafeArea()
         }
     }
 
@@ -123,9 +155,14 @@ struct DiscoverView: View {
                             .padding(.top, 8)
                             .padding(.bottom, 12)
                     }
-                    // v4.4 真实封面大卡片（仅非搜索模式）：每日推荐 / 未来飙升榜
+                    // [Beans#7] 个性化双卡：每日推荐 / 私人漫游
                     if !isSearchMode {
                         realCoverEntries
+                            .padding(.bottom, 16)
+                    }
+                    // [Beans#7] 社会认同：排行榜（热歌榜/未来飙升榜/新歌榜）
+                    if !isSearchMode {
+                        rankingSection
                             .padding(.bottom, 12)
                     }
                     // Beans 风格：热搜胶囊（仅非搜索模式）
@@ -401,7 +438,9 @@ struct DiscoverView: View {
     // [impeccable-Typeset] 字号 5 档内（20/13/11）
     // [三铁律①] 按压反馈走 .pressable()
 
-    /// 真实封面大卡片：每日推荐 / 未来飙升榜（Beans home.jpg 双卡片语言）
+    // [Beans#7 顺序即推荐] 首页纵向顺序：个性化（每日推荐+私人漫游）→ 社会认同（排行榜）。
+    // 未来飙升榜属于"排行榜"家族，和热歌榜/新歌榜在一起，不再与每日推荐并列。
+    /// 真实封面大卡片：每日推荐 / 私人漫游（Beans home.jpg 双卡片语言）
     private var realCoverEntries: some View {
         HStack(spacing: 12) {
             NavigationLink {
@@ -418,19 +457,114 @@ struct DiscoverView: View {
             .pressable()
 
             NavigationLink {
-                FutureTrendingView()
+                PrivateRoamView()
             } label: {
                 realCoverCard(
-                    coverURL: trendingCoverURL,
-                    icon: "chart.line.uptrend.xyaxis",
-                    title: "未来飙升榜",
-                    subtitle: "AI 预测 7 天热歌",
-                    badge: "AI 预测"
+                    coverURL: roamCoverURL,
+                    icon: "waveform",
+                    title: "私人漫游",
+                    subtitle: "从一首歌开始漫游",
+                    badge: nil
                 )
             }
             .pressable()
         }
         .padding(.horizontal, 16)
+    }
+
+    /// 排行榜区：热歌榜 / 未来飙升榜 / 新歌榜（[Beans#7] 颜色即信息：红/紫/绿）
+    private var rankingSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("排行榜")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(AppleTheme.label)
+                .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    rankingCard(
+                        title: "热歌榜",
+                        color: Color(red: 0.93, green: 0.35, blue: 0.44),
+                        coverURL: hotChartCoverURL,
+                        idx: 1
+                    )
+                    // 未来飙升榜：我们的 AI 预测榜，归入排行榜家族
+                    NavigationLink {
+                        FutureTrendingView()
+                    } label: {
+                        rankingCardContent(
+                            title: "未来飙升榜",
+                            subtitle: "AI 预测",
+                            color: Color(red: 0.50, green: 0.45, blue: 0.89),
+                            coverURL: trendingCoverURL
+                        )
+                    }
+                    .pressable()
+                    rankingCard(
+                        title: "新歌榜",
+                        color: Color(red: 0.24, green: 0.78, blue: 0.49),
+                        coverURL: newChartCoverURL,
+                        idx: 2
+                    )
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+    }
+
+    /// 榜单卡片：点进去播该榜歌曲
+    private func rankingCard(title: String, color: Color, coverURL: URL?, idx: Int) -> some View {
+        Button {
+            Task { await playChart(idx: idx) }
+        } label: {
+            rankingCardContent(title: title, subtitle: "大家都在听", color: color, coverURL: coverURL)
+        }
+        .pressable()
+    }
+
+    /// 榜单卡片内容：实心色块（[Beans#6] 内容用实心，不用玻璃）
+    private func rankingCardContent(title: String, subtitle: String, color: Color, coverURL: URL?) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            Group {
+                if let coverURL {
+                    AsyncImage(url: coverURL) { phase in
+                        switch phase {
+                        case .success(let image): image.resizable().scaledToFill()
+                        default: color
+                        }
+                    }
+                } else {
+                    color
+                }
+            }
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.55)],
+                startPoint: .center, endPoint: .bottom
+            )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .padding(12)
+        }
+        .frame(width: 160, height: 160)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    /// 播榜单歌曲
+    private func playChart(idx: Int) async {
+        do {
+            let songs = try await NeteaseDiscoverService.shared.chartSongs(idx: idx, limit: 20)
+            await MainActor.run {
+                player.playPlatformTracks(songs)
+            }
+        } catch {
+            // 静默失败，不打扰
+        }
     }
 
     /// 大卡片：真实封面打底 + 底部压暗渐变 + 图标/标题/副标题
@@ -495,18 +629,28 @@ struct DiscoverView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    /// 发现页网易云内容：大卡片真实封面（仅非搜索模式拉取）
+    /// 发现页网易云内容：大卡片真实封面 + 榜单封面（仅非搜索模式拉取）
     private func fetchDiscoverContent() {
         guard !isSearchMode, !isLoadingPlaylists else { return }
         isLoadingPlaylists = true
         Task {
             async let daily = NeteaseDiscoverService.shared.dailyCoverURL()
             async let trending = NeteaseDiscoverService.shared.trendingCoverURL()
+            async let roam = NeteaseDiscoverService.shared.chartSongs(idx: 1, limit: 1)
+            async let hot = NeteaseDiscoverService.shared.chartInfo(idx: 1)
+            async let newsong = NeteaseDiscoverService.shared.chartInfo(idx: 2)
             do {
-                let (d, t) = try await (daily, trending)
+                let d = try await daily
+                let t = try await trending
+                let r = try await roam
+                let h = try await hot
+                let n = try await newsong
                 await MainActor.run {
                     dailyCoverURL = d
                     trendingCoverURL = t
+                    roamCoverURL = r.first?.coverURL
+                    hotChartCoverURL = h.coverURL
+                    newChartCoverURL = n.coverURL
                     isLoadingPlaylists = false
                 }
             } catch {

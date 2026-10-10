@@ -61,6 +61,7 @@
 		F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */; };
 		F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */; };
 		F1A2B3C4D5E6000300000001 /* DailyRecommendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000300000002 /* DailyRecommendView.swift */; };
+		F1A2B3C4D5E6000400000001 /* PrivateRoamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000400000002 /* PrivateRoamView.swift */; };
 		40EF3AE912FBCB1E1422B325 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C85E41F938FD27D844511EC6 /* SearchView.swift */; };
 		F1A2B3C4D5E6000200000001 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000200000002 /* FlowLayout.swift */; };
 /* End PBXBuildFile section */
@@ -130,6 +131,7 @@
 		F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistImportView.swift; sourceTree = "<group>"; };
 		F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		F1A2B3C4D5E6000300000002 /* DailyRecommendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRecommendView.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6000400000002 /* PrivateRoamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateRoamView.swift; sourceTree = "<group>"; };
 		F1A2B3C4D5E6000200000002 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/FlowLayout.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -244,6 +246,7 @@
 				F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */,
 				F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */,
 				F1A2B3C4D5E6000300000002 /* DailyRecommendView.swift */,
+				F1A2B3C4D5E6000400000002 /* PrivateRoamView.swift */,
 				F1A2B3C4D5E6000200000002 /* FlowLayout.swift */,
 			);
 			path = Views;
@@ -393,6 +396,7 @@
 				F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */,
 				F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */,
 				F1A2B3C4D5E6000300000001 /* DailyRecommendView.swift in Sources */,
+				F1A2B3C4D5E6000400000001 /* PrivateRoamView.swift in Sources */,
 				40EF3AE912FBCB1E1422B325 /* SearchView.swift in Sources */,
 				F1A2B3C4D5E6000200000001 /* FlowLayout.swift in Sources */,
 			);

@@ -56,6 +56,15 @@ private struct PlaylistTracksDTO: Decodable {
     let songs: [PlaylistTrackDTO]?
 }
 
+private struct TopListDTO: Decodable {
+    let playlist: TopPlaylistDTO?
+    struct TopPlaylistDTO: Decodable {
+        let name: String?
+        let coverImgUrl: String?
+        let tracks: [PlaylistTrackDTO]?
+    }
+}
+
 final class NeteaseDiscoverService {
     static let shared = NeteaseDiscoverService()
 
@@ -171,7 +180,47 @@ final class NeteaseDiscoverService {
             "/playlist/track/all",
             query: ["id": "\(id)", "limit": "\(limit)"]
         )
-        return (dto.songs ?? []).compactMap { s in
+        return mapTracks(dto.songs)
+    }
+
+    // MARK: - 相似歌曲（私人漫游用，[Beans#7]）
+
+    /// /simi/song：根据歌曲 id 取相似歌曲（免登录）。
+    /// 私人漫游的"漫游"就靠它：当前歌曲 → 相似歌曲 → 下一首的相似歌曲……
+    func similarSongs(id: String, limit: Int = 10) async throws -> [PlatformTrack] {
+        let dto: PlaylistTracksDTO = try await get(
+            "/simi/song",
+            query: ["id": id, "limit": "\(limit)"]
+        )
+        return mapTracks(dto.songs)
+    }
+
+    // MARK: - 排行榜（[Beans#7] 顺序即推荐）
+
+    /// 榜单曲目：idx 1=热歌榜，2=新歌榜，4=飙升榜（ncm-api 经典索引）。
+    func chartSongs(idx: Int, limit: Int = 20) async throws -> [PlatformTrack] {
+        let dto: TopListDTO = try await get(
+            "/top/list",
+            query: ["idx": "\(idx)"]
+        )
+        return Array(mapTracks(dto.playlist?.tracks).prefix(limit))
+    }
+
+    /// 榜单元信息（名字 + 封面，排行榜卡片用）
+    func chartInfo(idx: Int) async throws -> (name: String, coverURL: URL?) {
+        let dto: TopListDTO = try await get(
+            "/top/list",
+            query: ["idx": "\(idx)"]
+        )
+        return (
+            name: dto.playlist?.name ?? "榜单",
+            coverURL: sizedCover(dto.playlist?.coverImgUrl, size: 400)
+        )
+    }
+
+    /// 网易云歌曲 DTO → PlatformTrack（歌单/相似/榜单共用）
+    private func mapTracks(_ songs: [PlaylistTrackDTO]?) -> [PlatformTrack] {
+        (songs ?? []).compactMap { s in
             let artist = (s.ar ?? []).compactMap { $0.name }.joined(separator: "/")
             guard !artist.isEmpty || !(s.name?.isEmpty ?? true) else { return nil }
             return PlatformTrack(

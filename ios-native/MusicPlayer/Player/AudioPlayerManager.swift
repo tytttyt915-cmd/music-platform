@@ -92,7 +92,21 @@ class AudioPlayerManager: ObservableObject {
     ///   传网易云 ID 会 404，后端返回 nil 时该歌曲被跳过。
     @MainActor
     func playPlatformTracks(_ songs: [PlatformTrack], startAt index: Int = 0, via platform: String? = nil) {
-        let tracks: [Track] = songs.compactMap { song in
+        let tracks = convertPlatformTracks(songs, via: platform)
+        guard !tracks.isEmpty else { return }
+        playTracks(tracks, startAt: min(index, tracks.count - 1))
+    }
+
+    /// 往当前队列尾部追加平台歌曲（私人漫游用，不打断当前播放）
+    @MainActor
+    func appendPlatformTracks(_ songs: [PlatformTrack], via platform: String? = nil) {
+        let tracks = convertPlatformTracks(songs, via: platform)
+        guard !tracks.isEmpty else { return }
+        queue.append(contentsOf: tracks)
+    }
+
+    private func convertPlatformTracks(_ songs: [PlatformTrack], via platform: String? = nil) -> [Track] {
+        songs.compactMap { song in
             let target = platform ?? song.platform
             guard let url = try? MusicService.shared.platformStreamURL(
                 platform: target,
@@ -105,11 +119,10 @@ class AudioPlayerManager: ObservableObject {
                 duration: song.duration,
                 artworkURL: song.coverURL,
                 platformStreamURL: url,
-                platform: target
+                platform: target,
+                platformId: song.platformId
             )
         }
-        guard !tracks.isEmpty else { return }
-        playTracks(tracks, startAt: min(index, tracks.count - 1))
     }
     
     func togglePlayPause() {

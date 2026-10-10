@@ -3,7 +3,8 @@ import SwiftUI
 // MARK: - LyricsView（2026-10-09 Apple 原生风重做）
 //
 // 职责：歌词页。
-//   - 当前行高亮（强调色 + 粗体 + 放大），其余行次文字
+//   - [Beans#4 字号即权力] 当前行 40pt 加粗纯白，其余行 29pt 常规灰白，
+//     不用颜色徽章区分——大小即层级（本能 > 学习）
 //   - 自动滚动到当前行（anchor .center，弹簧动画）
 //   - 无歌词显示空态
 
@@ -11,7 +12,6 @@ struct LyricsView: View {
     let songId: String
     @EnvironmentObject private var music: MusicService
     @EnvironmentObject private var player: AudioPlayerManager
-    @EnvironmentObject private var theme: ThemeSettings
 
     @State private var lines: [LyricLine] = []
     @State private var isLoading = false
@@ -32,19 +32,19 @@ struct LyricsView: View {
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        VStack(spacing: 14) {
+                        VStack(spacing: 22) {
                             ForEach(lines) { line in
                                 let current = isCurrent(line)
                                 Text(line.text)
-                                    .font(.system(size: current ? 19 : 15, weight: current ? .bold : .regular))
-                                    .foregroundColor(current ? theme.accentColor : AppleTheme.secondaryLabel)
+                                    .font(.system(size: current ? 40 : 29, weight: current ? .bold : .regular))
+                                    .foregroundColor(current ? AppleTheme.label : AppleTheme.secondaryLabel)
                                     .multilineTextAlignment(.center)
                                     .frame(maxWidth: .infinity)
                                     .id(line.id)
                                     .animation(.gsapPower2Out, value: current)
                             }
                         }
-                        .padding(.vertical, 20)
+                        .padding(.vertical, 28)
                         .padding(.horizontal, 24)
                     }
                     // 检测用户拖拽：拖拽时暂停跟随

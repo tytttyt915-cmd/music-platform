@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 
 // MARK: - Beans 风格设置页（v4.3）
 // 对照 Beans-Music v2.0.3 真机截图重做：
@@ -75,7 +76,7 @@ struct SettingsView: View {
                 RowDef(key: "quality", icon: "waveform", title: "音源与音质", subtitle: "统一音质", kind: .expandable(.quality)),
                 RowDef(key: "playset", icon: "play.circle", title: "播放设置", subtitle: nil, kind: .expandable(.playback)),
                 RowDef(key: "sleep", icon: "moon.zzz.fill", title: "睡眠定时", subtitle: nil, kind: .sheetSleepTimer),
-                RowDef(key: "eq", icon: "slider.horizontal.3", title: "均衡器", subtitle: "已关闭", kind: .push(.equalizer)),
+                RowDef(key: "eq", icon: "slider.horizontal.3", title: "均衡器", subtitle: "未实现", kind: .push(.equalizer)),
             ]),
             SectionDef(key: "data", title: "数据管理", rows: [
                 RowDef(key: "backup", icon: "externaldrive", title: "备份与恢复", subtitle: nil, kind: .expandable(.backup)),
@@ -432,7 +433,9 @@ private struct WallpaperSettingsView: View {
     @AppStorage("settings.wallpaper.enabled") private var enabled = false
     // v4.3：发现页背景（默认深空渐变）
     @AppStorage("settings.discover.wallpaper") private var discoverWallpaper = DiscoverWallpaper.darkSpace.rawValue
-    private let discoverOptions: [DiscoverWallpaper] = [.system, .darkSpace, .inkBlue, .ember]
+    // [Beans#3] 自选图片：用户从相册选一张当发现页背景（模糊+压暗）
+    @State private var photoItem: PhotosPickerItem?
+    private let discoverOptions: [DiscoverWallpaper] = [.system, .darkSpace, .inkBlue, .ember, .custom]
 
     var body: some View {
         VStack(spacing: 2) {
@@ -444,8 +447,42 @@ private struct WallpaperSettingsView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                 ForEach(discoverOptions, id: \.rawValue) { option in
-                    InlineOptionRow(title: option.rawValue, selected: discoverWallpaper == option.rawValue) {
-                        discoverWallpaper = option.rawValue
+                    if option == .custom {
+                        // 自选图片行：点后弹相册选择器
+                        PhotosPicker(selection: $photoItem, matching: .images) {
+                            HStack {
+                                Text(option.rawValue).font(.body).foregroundColor(.primary)
+                                Spacer()
+                                if discoverWallpaper == option.rawValue {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                        .font(.system(size: 16, weight: .semibold))
+                                } else {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(.secondary)
+                                        .font(.system(size: 16))
+                                }
+                            }
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .onChange(of: photoItem) { item in
+                            guard let item else { return }
+                            Task {
+                                if let data = try? await item.loadTransferable(type: Data.self),
+                                   !data.isEmpty {
+                                    try? data.write(to: DiscoverWallpaper.customImageURL)
+                                    await MainActor.run {
+                                        discoverWallpaper = DiscoverWallpaper.custom.rawValue
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        InlineOptionRow(title: option.rawValue, selected: discoverWallpaper == option.rawValue) {
+                            discoverWallpaper = option.rawValue
+                        }
                     }
                 }
             }
@@ -488,7 +525,7 @@ private struct BackupActionsView: View {
     var body: some View {
         VStack(spacing: 8) {
             Button {
-                message = "备份功能即将上线"
+                message = "备份功能尚未实现"
             } label: {
                 Text("立即备份")
                     .font(.body.weight(.medium))
@@ -610,21 +647,20 @@ private struct SettingsSubPage<Content: View>: View {
 }
 
 private struct EqualizerSettingsView: View {
-    @State private var enabled = false
-
+    // [Beans#8 状态不撒谎] 均衡器尚未实现：不给假开关，直接写明状态。
+    // Beans 的做法也是诚实展示"已关闭"，而不是"敬请期待"。
     var body: some View {
         SettingsSubPage(title: "均衡器") {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("启用均衡器").font(.body)
-                    Text("已关闭").font(.caption).foregroundColor(.secondary)
+                    Text("均衡器").font(.body)
+                    Text("未实现").font(.caption).foregroundColor(.secondary)
                 }
                 Spacer()
-                Toggle("", isOn: $enabled).labelsHidden()
             }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Text("均衡器功能即将上线，敬请期待。")
+            Text("均衡器功能尚未实现，当前所有音频为直通输出。")
                 .font(.callout)
                 .foregroundColor(.secondary)
         }
@@ -759,7 +795,7 @@ private struct DiagnosticsView: View {
             }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Text("日志导出功能即将上线。")
+            Text("日志导出功能尚未实现。")
                 .font(.callout)
                 .foregroundColor(.secondary)
         }

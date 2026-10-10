@@ -15,6 +15,8 @@ struct Track: Identifiable, Codable, Equatable {
     var platformStreamURL: URL?
     /// 平台名（netease/qq/kugou），用于展示角标
     var platform: String?
+    /// 平台歌曲 ID（网易云等）：私人漫游取相似歌曲用
+    var platformId: String?
 
     init(id: String = UUID().uuidString,
          title: String,
@@ -25,7 +27,8 @@ struct Track: Identifiable, Codable, Equatable {
          artworkURL: URL? = nil,
          onlineSongId: String? = nil,
          platformStreamURL: URL? = nil,
-         platform: String? = nil) {
+         platform: String? = nil,
+         platformId: String? = nil) {
         self.id = id
         self.title = title
         self.artist = artist
@@ -36,6 +39,7 @@ struct Track: Identifiable, Codable, Equatable {
         self.onlineSongId = onlineSongId
         self.platformStreamURL = platformStreamURL
         self.platform = platform
+        self.platformId = platformId
     }
     
     static func == (lhs: Track, rhs: Track) -> Bool {
