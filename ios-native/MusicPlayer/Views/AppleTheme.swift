@@ -141,9 +141,11 @@ struct SongRow: View {
         HStack(spacing: 12) {
             coverArt(url: song.coverURL, size: 48)
             VStack(alignment: .leading, spacing: 3) {
+                // Beans 对标：当前播放标题琥珀色高亮 + semibold
                 Text(song.title)
                     .font(.body)
-                    .foregroundColor(AppleTheme.label)
+                    .fontWeight(isPlaying ? .semibold : .regular)
+                    .foregroundColor(isPlaying ? .orange : AppleTheme.label)
                     .lineLimit(1)
                 Text("\(song.artist) · \(formatDuration(song.duration))")
                     .font(.subheadline)
@@ -162,6 +164,9 @@ struct SongRow: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
         .contentShape(Rectangle())
+        // Beans 对标：当前行微缩放 1.012，spring 过渡
+        .scaleEffect(isPlaying ? 1.012 : 1.0)
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: isPlaying)
     }
 }
 
