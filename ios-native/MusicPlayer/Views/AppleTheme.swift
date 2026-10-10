@@ -132,14 +132,17 @@ extension View {
 // MARK: - 通用组件
 
 /// 原生风歌曲行：48pt 封面 + 标题/歌手 + 播放状态
+/// v4.2：封面带 matchedGeometryEffect，点歌时飞进 FullPlayer（与 FullPlayerView 配对）
 struct SongRow: View {
     let song: OnlineSong
     let isPlaying: Bool
     @EnvironmentObject private var theme: ThemeSettings
+    @EnvironmentObject private var player: AudioPlayerManager
+    @Environment(\.coverFlyNamespace) private var coverNS
 
     var body: some View {
         HStack(spacing: 12) {
-            coverArt(url: song.coverURL, size: 48)
+            coverWithFly
             VStack(alignment: .leading, spacing: 3) {
                 // Beans 对标：当前播放标题琥珀色高亮 + semibold
                 Text(song.title)
@@ -212,6 +215,17 @@ struct PlatformSongRow: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
         .contentShape(Rectangle())
+    }
+
+    /// 封面飞行：只有被点中的那一行参与（id 配对），避免多行冲突
+    @ViewBuilder
+    private var coverWithFly: some View {
+        let art = coverArt(url: song.coverURL, size: 48)
+        if let ns = coverNS, player.coverFlySongID == song.id {
+            art.matchedGeometryEffect(id: "coverfly", in: ns, isSource: !player.showFullPlayer)
+        } else {
+            art
+        }
     }
 }
 

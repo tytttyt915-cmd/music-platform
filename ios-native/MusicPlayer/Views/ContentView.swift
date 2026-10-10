@@ -1,5 +1,19 @@
 import SwiftUI
 
+// MARK: - 封面飞行动画命名空间（v4.2）
+// ContentView 创建 → 经 environment 下发 → DiscoverView 行封面 / FullPlayer 大封面共享，
+// 实现"从列表点歌，封面从 cell 飞到播放页"的 hero 转场。
+private struct CoverFlyNamespaceKey: EnvironmentKey {
+    static let defaultValue: Namespace.ID? = nil
+}
+
+extension EnvironmentValues {
+    var coverFlyNamespace: Namespace.ID? {
+        get { self[CoverFlyNamespaceKey.self] }
+        set { self[CoverFlyNamespaceKey.self] = newValue }
+    }
+}
+
 // MARK: - ContentView（2026-10-09 Apple 原生风重做）
 //
 // 职责：App 主容器。
@@ -7,13 +21,14 @@ import SwiftUI
 //   - 底部自定义 TabBar：Liquid Glass 背景（iOS 26 .glassEffect，低版本降级毛玻璃）
 //   - MiniPlayer 悬浮在 TabBar 上方：Liquid Glass 胶囊，点击/上滑展开 FullPlayer
 //   - FullPlayer 用 fullScreenCover + 下滑手势关闭（1:1 跟手，可打断）
+//   - v4.2：showFullPlayer 上移到 AudioPlayerManager，供封面飞行动画跨视图协调
 
 struct ContentView: View {
     @EnvironmentObject private var player: AudioPlayerManager
     @EnvironmentObject private var theme: ThemeSettings
 
     @State private var selection = 0
-    @State private var showFullPlayer = false
+    @Namespace private var coverNS
 
     private let tabs: [(title: String, icon: String, selectedIcon: String)] = [
         ("发现", "safari", "safari.fill"),
@@ -41,7 +56,7 @@ struct ContentView: View {
             VStack(spacing: 8) {
                 if player.currentTrack != nil {
                     MiniPlayerBar {
-                        showFullPlayer = true
+                        player.showFullPlayer = true
                     }
                     .padding(.horizontal, 12)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -52,9 +67,10 @@ struct ContentView: View {
         }
         .background(AppleTheme.background.ignoresSafeArea())
         .animation(.gsapBackOut, value: player.currentTrack?.id)
-        .fullScreenCover(isPresented: $showFullPlayer) {
+        .fullScreenCover(isPresented: $player.showFullPlayer) {
             FullPlayerView()
         }
+        .environment(\.coverFlyNamespace, coverNS)
     }
 
     // MARK: - Liquid Glass TabBar

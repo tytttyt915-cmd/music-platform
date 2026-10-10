@@ -71,7 +71,13 @@ struct DiscoverView: View {
                             }
                             ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
                                 Button {
+                                    // v4.2 封面飞进播放页：先登记飞行 id 让行封面配对，
+                                    // 下一 runloop 再打开播放页，hero 转场从 cell 飞到大封面
+                                    player.coverFlySongID = song.id
                                     player.playOnlineSongs(songs, startAt: idx)
+                                    DispatchQueue.main.async {
+                                        player.showFullPlayer = true
+                                    }
                                 } label: {
                                     SongRow(
                                         song: song,

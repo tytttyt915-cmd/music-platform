@@ -58,6 +58,9 @@
 		D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */; };
 		E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DD894334F7A35167264BE6 /* RadioView.swift */; };
 		12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */; };
+		F1A2B3C4D5E6000100000001 /* FutureTrendingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */; };
+		F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */; };
+		F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -121,6 +124,9 @@
 		C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/SourceSwitchView.swift; sourceTree = "<group>"; };
 		29DD894334F7A35167264BE6 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
 		95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effects/WaveformProgressView.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FutureTrendingView.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistImportView.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,6 +189,7 @@
 				124DF637039041B6806790BE /* LibraryStore.swift */,
 				6AC5C2FDEA5B6A6CCE10EA54 /* SleepTimerManager.swift */,
 				2C3C3D8E3B6FCA53D754602D /* SpectrumAnalyzer.swift */,
+				F1A2B3C4D5E6000100000006 /* LiveActivityManager.swift */,
 			);
 			path = Player;
 			sourceTree = "<group>";
@@ -231,6 +238,8 @@
 				C3E23D5FA55E238E30DBE34E /* SourceSwitchView.swift */,
 				29DD894334F7A35167264BE6 /* RadioView.swift */,
 				95F6E060F3554AFC696646F2 /* WaveformProgressView.swift */,
+				F1A2B3C4D5E6000100000002 /* FutureTrendingView.swift */,
+				F1A2B3C4D5E6000100000004 /* PlaylistImportView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -375,6 +384,9 @@
 				D16097205839AB93F9C47A24 /* SourceSwitchView.swift in Sources */,
 				E7F9765A7921D8D356C55E19 /* RadioView.swift in Sources */,
 				12E997569BD9E26A3414A998 /* WaveformProgressView.swift in Sources */,
+				F1A2B3C4D5E6000100000001 /* FutureTrendingView.swift in Sources */,
+				F1A2B3C4D5E6000100000003 /* PlaylistImportView.swift in Sources */,
+				F1A2B3C4D5E6000100000005 /* LiveActivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -507,7 +519,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1;
+				MARKETING_VERSION = 4.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.tamarind5153.aries1536;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = 00008110-00025DCC367A401EXT7L4N;
@@ -532,7 +544,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1;
+				MARKETING_VERSION = 4.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.tamarind5153.aries1536;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = 00008110-00025DCC367A401EXT7L4N;

@@ -113,8 +113,8 @@ final class LiveActivityManager {
         #endif
     }
 
+    #if canImport(ActivityKit)
     private func startLiveActivity(track: Track, state: NowPlayingActivityAttributes.ContentState) {
-        #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
         let attributes = NowPlayingActivityAttributes(songId: track.id)
         do {
@@ -131,11 +131,9 @@ final class LiveActivityManager {
             // 无 Widget Extension / 被拒绝都不影响播放，静默
             currentActivity = nil
         }
-        #endif
     }
 
     private func endLiveActivity() {
-        #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else { return }
         Task {
             let activities = Activity<NowPlayingActivityAttributes>.activities
@@ -144,6 +142,6 @@ final class LiveActivityManager {
             }
             await MainActor.run { self.currentActivity = nil }
         }
-        #endif
     }
+    #endif
 }
